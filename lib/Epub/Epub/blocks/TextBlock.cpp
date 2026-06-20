@@ -66,8 +66,9 @@ void drawDecorationLine(const GfxRenderer& renderer, const int startX, const int
 }
 }  // namespace
 
-void TextBlock::recordFontUsage(FontCacheManager& fontCacheManager, const int fontId,
+void TextBlock::recordFontUsage(FontCacheManager& fontCacheManager, const int paramFontId,
                                 const uint8_t bionicReadingMode) const {
+  const int fontId = fontIdOverride != 0 ? fontIdOverride : paramFontId;
   if (words.size() != wordStyles.size()) {
     LOG_ERR("TXB", "Font usage scan skipped: size mismatch (words=%u, styles=%u)\n", (uint32_t)words.size(),
             (uint32_t)wordStyles.size());
@@ -83,8 +84,9 @@ void TextBlock::recordFontUsage(FontCacheManager& fontCacheManager, const int fo
   }
 }
 
-void TextBlock::render(const GfxRenderer& renderer, const int fontId, const int x, const int y,
+void TextBlock::render(const GfxRenderer& renderer, const int paramFontId, const int x, const int y,
                        const uint8_t bionicReadingMode) const {
+  const int fontId = fontIdOverride != 0 ? fontIdOverride : paramFontId;
   // Validate iterator bounds before rendering
   const bool hasFocusAnnotations = !wordFocusBoundary.empty() || !wordFocusSuffixX.empty();
   if (words.size() != wordXpos.size() || words.size() != wordStyles.size() ||
@@ -262,6 +264,9 @@ bool TextBlock::serialize(FsFile& file) const {
   serialization::writePod(file, blockStyle.textIndent);
   serialization::writePod(file, blockStyle.textIndentDefined);
 
+  // Per-block font override (code blocks). 0 for ordinary text.
+  serialization::writePod(file, static_cast<int32_t>(fontIdOverride));
+
   return true;
 }
 
@@ -313,7 +318,12 @@ std::unique_ptr<TextBlock> TextBlock::deserialize(FsFile& file) {
   serialization::readPod(file, blockStyle.textIndent);
   serialization::readPod(file, blockStyle.textIndentDefined);
 
-  return std::unique_ptr<TextBlock>(new TextBlock(std::move(words), std::move(wordXpos), std::move(wordStyles),
-                                                  std::move(wordFocusBoundary), std::move(wordFocusSuffixX),
-                                                  blockStyle));
+  int32_t fontIdOverride = 0;
+  serialization::readPod(file, fontIdOverride);
+
+  auto block = std::unique_ptr<TextBlock>(new TextBlock(std::move(words), std::move(wordXpos), std::move(wordStyles),
+                                                        std::move(wordFocusBoundary), std::move(wordFocusSuffixX),
+                                                        blockStyle));
+  block->setFontIdOverride(fontIdOverride);
+  return block;
 }

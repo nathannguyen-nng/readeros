@@ -1244,10 +1244,10 @@ void EpubReaderActivity::render(RenderLock&& lock) {
       const auto popupFn = [this]() { GUI.drawPopup(renderer, tr(STR_INDEXING)); };
 
       if (!section->createSectionFile(
-              SETTINGS.getReaderFontId(), SETTINGS.getReaderLineCompression(), SETTINGS.extraParagraphSpacing,
-              SETTINGS.forceParagraphIndents, SETTINGS.paragraphAlignment, viewportWidth, viewportHeight,
-              SETTINGS.hyphenationEnabled, bionicNormalLayout, SETTINGS.embeddedStyle, SETTINGS.imageRendering,
-              popupFn)) {
+              SETTINGS.getReaderFontId(), SETTINGS.getMonospaceFontId(), SETTINGS.getReaderLineCompression(),
+              SETTINGS.extraParagraphSpacing, SETTINGS.forceParagraphIndents, SETTINGS.paragraphAlignment, viewportWidth,
+              viewportHeight, SETTINGS.hyphenationEnabled, bionicNormalLayout, SETTINGS.embeddedStyle,
+              SETTINGS.imageRendering, popupFn)) {
         LOG_ERR("ERS", "Failed to persist page data to SD");
         section.reset();
         return;
@@ -1409,11 +1409,11 @@ void EpubReaderActivity::silentIndexNextChapterIfNeeded(const uint16_t viewportW
 
   LOG_DBG("ERS", "Silently indexing next chapter: %d (free=%u, maxAlloc=%u)", nextSpineIndex, ESP.getFreeHeap(),
           ESP.getMaxAllocHeap());
-  if (!nextSection.createSectionFile(SETTINGS.getReaderFontId(), SETTINGS.getReaderLineCompression(),
-                                     SETTINGS.extraParagraphSpacing, SETTINGS.forceParagraphIndents,
-                                     SETTINGS.paragraphAlignment, viewportWidth, viewportHeight,
-                                     SETTINGS.hyphenationEnabled, bionicNormalLayout, SETTINGS.embeddedStyle,
-                                     SETTINGS.imageRendering)) {
+  if (!nextSection.createSectionFile(SETTINGS.getReaderFontId(), SETTINGS.getMonospaceFontId(),
+                                     SETTINGS.getReaderLineCompression(), SETTINGS.extraParagraphSpacing,
+                                     SETTINGS.forceParagraphIndents, SETTINGS.paragraphAlignment, viewportWidth,
+                                     viewportHeight, SETTINGS.hyphenationEnabled, bionicNormalLayout,
+                                     SETTINGS.embeddedStyle, SETTINGS.imageRendering)) {
     LOG_ERR("ERS", "Failed silent indexing for chapter: %d", nextSpineIndex);
   } else {
     releaseReaderSdFontCachesForLowMemory(renderer, "ERS", "silent section cache build");

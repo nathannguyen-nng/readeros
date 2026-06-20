@@ -23,6 +23,10 @@ class ParsedText {
   bool hyphenationEnabled;
   bool focusReadingEnabled;
   bool firstLineIndentPending = true;
+  // Per-block font override (code <pre>/<code>). 0 = use the fontId passed to
+  // layoutAndExtractLines(). When set, layout metrics and the emitted TextBlock
+  // lines all use this font instead of the reader's selected family.
+  int fontIdOverride = 0;
 
   void prepareParagraphIndent(const GfxRenderer& renderer, int fontId);
   std::vector<size_t> computeLineBreaks(const GfxRenderer& renderer, int fontId, int pageWidth,
@@ -49,6 +53,8 @@ class ParsedText {
   ~ParsedText() = default;
 
   void addWord(std::string word, EpdFontFamily::Style fontStyle, bool underline = false, bool attachToPrevious = false);
+  void setFontIdOverride(int id) { fontIdOverride = id; }
+  int getFontIdOverride() const { return fontIdOverride; }
   void setBlockStyle(const BlockStyle& blockStyle) { this->blockStyle = blockStyle; }
   BlockStyle& getBlockStyle() { return blockStyle; }
   size_t size() const { return words.size(); }

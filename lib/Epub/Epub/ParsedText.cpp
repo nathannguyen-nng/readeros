@@ -240,12 +240,23 @@ void ParsedText::addWord(std::string word, const EpdFontFamily::Style fontStyle,
   processSegment(segment, inWordSegment, isFirstSegment ? attachToPrevious : true);
 }
 // Consumes data to minimize memory usage
-void ParsedText::layoutAndExtractLines(const GfxRenderer& renderer, const int fontId, const uint16_t viewportWidth,
+void ParsedText::layoutAndExtractLines(const GfxRenderer& renderer, const int paramFontId, const uint16_t viewportWidth,
                                        const std::function<void(std::shared_ptr<TextBlock>)>& processLine,
                                        const bool includeLastLine) {
   if (words.empty()) {
     return;
   }
+
+  // Resolve the effective layout font: code blocks override the reader's family so
+  // all width/line-break metrics below match the font the lines will render with.
+  const int fontId = fontIdOverride != 0 ? fontIdOverride : paramFontId;
+  // Stamp each emitted line with the override so TextBlock::render() uses it too.
+  const int overrideId = fontIdOverride;
+  const std::function<void(std::shared_ptr<TextBlock>)> emitLine =
+      [&processLine, overrideId](std::shared_ptr<TextBlock> line) {
+        if (overrideId != 0 && line) line->setFontIdOverride(overrideId);
+        processLine(std::move(line));
+      };
 
   // Apply fixed transforms before any per-line layout work.
   prepareParagraphIndent(renderer, fontId);
@@ -280,7 +291,7 @@ void ParsedText::layoutAndExtractLines(const GfxRenderer& renderer, const int fo
   const size_t lineCount = includeLastLine ? lineBreakIndices.size() : lineBreakIndices.size() - 1;
 
   for (size_t i = 0; i < lineCount; ++i) {
-    extractLine(i, pageWidth, wordWidths, wordContinues, lineBreakIndices, processLine, renderer, fontId);
+    extractLine(i, pageWidth, wordWidths, wordContinues, lineBreakIndices, emitLine, renderer, fontId);
   }
 
   // Remove consumed words so size() reflects only remaining words

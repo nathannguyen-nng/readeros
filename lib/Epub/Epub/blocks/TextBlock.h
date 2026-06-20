@@ -29,6 +29,10 @@ class TextBlock final : public Block {
   // Empty in lockstep with wordFocusBoundary.
   std::vector<uint16_t> wordFocusSuffixX;
   BlockStyle blockStyle;
+  // Per-block font override. 0 = use the page/section font passed to render().
+  // Non-zero (e.g. a JetBrains Mono id) makes a code <pre>/<code> line render and
+  // measure with its own font regardless of the reader's selected family.
+  int fontIdOverride = 0;
 
  public:
   explicit TextBlock(std::vector<std::string> words, std::vector<int16_t> word_xpos,
@@ -43,6 +47,8 @@ class TextBlock final : public Block {
   ~TextBlock() override = default;
   void setBlockStyle(const BlockStyle& blockStyle) { this->blockStyle = blockStyle; }
   const BlockStyle& getBlockStyle() const { return blockStyle; }
+  void setFontIdOverride(int id) { fontIdOverride = id; }
+  int getFontIdOverride() const { return fontIdOverride; }
   const std::vector<std::string>& getWords() const { return words; }
   const std::vector<int16_t>& getWordXpos() const { return wordXpos; }
   bool isEmpty() override { return words.empty(); }

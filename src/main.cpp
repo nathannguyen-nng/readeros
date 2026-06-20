@@ -79,23 +79,29 @@ EpdFont bookerly18BoldItalicFont(&bookerly_18_bolditalic);
 EpdFontFamily bookerly18FontFamily(&bookerly18RegularFont, &bookerly18BoldFont, &bookerly18ItalicFont,
                                    &bookerly18BoldItalicFont);
 
-// Lexend is bundled with regular and bold only. Italic falls back to regular,
-// and bold italic falls back to bold to keep the family complete for EPUB styling.
-EpdFont lexend10RegularFont(&lexend_10_regular);
-EpdFont lexend10BoldFont(&lexend_10_bold);
-EpdFontFamily lexend10FontFamily(&lexend10RegularFont, &lexend10BoldFont, &lexend10RegularFont, &lexend10BoldFont);
-EpdFont lexend12RegularFont(&lexend_12_regular);
-EpdFont lexend12BoldFont(&lexend_12_bold);
-EpdFontFamily lexend12FontFamily(&lexend12RegularFont, &lexend12BoldFont, &lexend12RegularFont, &lexend12BoldFont);
-EpdFont lexend14RegularFont(&lexend_14_regular);
-EpdFont lexend14BoldFont(&lexend_14_bold);
-EpdFontFamily lexend14FontFamily(&lexend14RegularFont, &lexend14BoldFont, &lexend14RegularFont, &lexend14BoldFont);
-EpdFont lexend16RegularFont(&lexend_16_regular);
-EpdFont lexend16BoldFont(&lexend_16_bold);
-EpdFontFamily lexend16FontFamily(&lexend16RegularFont, &lexend16BoldFont, &lexend16RegularFont, &lexend16BoldFont);
-EpdFont lexend18RegularFont(&lexend_18_regular);
-EpdFont lexend18BoldFont(&lexend_18_bold);
-EpdFontFamily lexend18FontFamily(&lexend18RegularFont, &lexend18BoldFont, &lexend18RegularFont, &lexend18BoldFont);
+// JetBrains Mono is the code-block font (ASCII + Latin-1 subset), bundled with
+// regular and bold only. Italic falls back to regular and bold italic to bold so
+// the family stays complete for EPUB styling inside <pre>/<code>.
+EpdFont jetbrainsmono10RegularFont(&jetbrainsmono_10_regular);
+EpdFont jetbrainsmono10BoldFont(&jetbrainsmono_10_bold);
+EpdFontFamily jetbrainsmono10FontFamily(&jetbrainsmono10RegularFont, &jetbrainsmono10BoldFont,
+                                        &jetbrainsmono10RegularFont, &jetbrainsmono10BoldFont);
+EpdFont jetbrainsmono12RegularFont(&jetbrainsmono_12_regular);
+EpdFont jetbrainsmono12BoldFont(&jetbrainsmono_12_bold);
+EpdFontFamily jetbrainsmono12FontFamily(&jetbrainsmono12RegularFont, &jetbrainsmono12BoldFont,
+                                        &jetbrainsmono12RegularFont, &jetbrainsmono12BoldFont);
+EpdFont jetbrainsmono14RegularFont(&jetbrainsmono_14_regular);
+EpdFont jetbrainsmono14BoldFont(&jetbrainsmono_14_bold);
+EpdFontFamily jetbrainsmono14FontFamily(&jetbrainsmono14RegularFont, &jetbrainsmono14BoldFont,
+                                        &jetbrainsmono14RegularFont, &jetbrainsmono14BoldFont);
+EpdFont jetbrainsmono16RegularFont(&jetbrainsmono_16_regular);
+EpdFont jetbrainsmono16BoldFont(&jetbrainsmono_16_bold);
+EpdFontFamily jetbrainsmono16FontFamily(&jetbrainsmono16RegularFont, &jetbrainsmono16BoldFont,
+                                        &jetbrainsmono16RegularFont, &jetbrainsmono16BoldFont);
+EpdFont jetbrainsmono18RegularFont(&jetbrainsmono_18_regular);
+EpdFont jetbrainsmono18BoldFont(&jetbrainsmono_18_bold);
+EpdFontFamily jetbrainsmono18FontFamily(&jetbrainsmono18RegularFont, &jetbrainsmono18BoldFont,
+                                        &jetbrainsmono18RegularFont, &jetbrainsmono18BoldFont);
 
 EpdFont notosans10RegularFont(&notosans_10_regular);
 EpdFont notosans10BoldFont(&notosans_10_bold);
@@ -285,17 +291,19 @@ void setupDisplayAndFonts(bool seamless = false) {
   fontCacheManager.setFontDecompressor(&fontDecompressor);
   renderer.setFontCacheManager(&fontCacheManager);
   renderer.insertFont(BOOKERLY_14_FONT_ID, bookerly14FontFamily);
+  // Register one code font unconditionally so <pre>/<code> blocks render even in
+  // slim (OMIT_FONTS) builds; the remaining sizes are added with the full set below.
+  renderer.insertFont(JETBRAINSMONO_14_FONT_ID, jetbrainsmono14FontFamily);
 #ifndef OMIT_FONTS
   renderer.insertFont(BOOKERLY_10_FONT_ID, bookerly10FontFamily);
   renderer.insertFont(BOOKERLY_12_FONT_ID, bookerly12FontFamily);
   renderer.insertFont(BOOKERLY_16_FONT_ID, bookerly16FontFamily);
   renderer.insertFont(BOOKERLY_18_FONT_ID, bookerly18FontFamily);
 
-  renderer.insertFont(LEXEND_10_FONT_ID, lexend10FontFamily);
-  renderer.insertFont(LEXEND_12_FONT_ID, lexend12FontFamily);
-  renderer.insertFont(LEXEND_14_FONT_ID, lexend14FontFamily);
-  renderer.insertFont(LEXEND_16_FONT_ID, lexend16FontFamily);
-  renderer.insertFont(LEXEND_18_FONT_ID, lexend18FontFamily);
+  renderer.insertFont(JETBRAINSMONO_10_FONT_ID, jetbrainsmono10FontFamily);
+  renderer.insertFont(JETBRAINSMONO_12_FONT_ID, jetbrainsmono12FontFamily);
+  renderer.insertFont(JETBRAINSMONO_16_FONT_ID, jetbrainsmono16FontFamily);
+  renderer.insertFont(JETBRAINSMONO_18_FONT_ID, jetbrainsmono18FontFamily);
 
   renderer.insertFont(NOTOSANS_10_FONT_ID, notosans10FontFamily);
   renderer.insertFont(NOTOSANS_12_FONT_ID, notosans12FontFamily);

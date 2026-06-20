@@ -285,16 +285,6 @@ float CrossPointSettings::getReaderLineCompression() const {
         case WIDE:
           return 1.0f;
       }
-    case LEXEND:
-      switch (lineSpacing) {
-        case TIGHT:
-          return 0.90f;
-        case NORMAL:
-        default:
-          return 0.95f;
-        case WIDE:
-          return 1.0f;
-      }
   }
 }
 
@@ -436,19 +426,23 @@ int CrossPointSettings::getReaderFontId() const {
         case EXTRA_LARGE:
           return NOTOSANS_18_FONT_ID;
       }
-    case LEXEND:
-      switch (fontSize) {
-        case X_SMALL:
-          return LEXEND_10_FONT_ID;
-        case SMALL:
-          return LEXEND_12_FONT_ID;
-        case MEDIUM:
-        default:
-          return LEXEND_14_FONT_ID;
-        case LARGE:
-          return LEXEND_16_FONT_ID;
-        case EXTRA_LARGE:
-          return LEXEND_18_FONT_ID;
-      }
+  }
+}
+
+// Monospace font used for code blocks (<pre>/<code>). Tracks the reader's font-size
+// setting so code scales alongside body text, independent of the reader font family.
+int CrossPointSettings::getMonospaceFontId() const {
+  switch (fontSize) {
+    case X_SMALL:
+      return JETBRAINSMONO_10_FONT_ID;
+    case SMALL:
+      return JETBRAINSMONO_12_FONT_ID;
+    case MEDIUM:
+    default:
+      return JETBRAINSMONO_14_FONT_ID;
+    case LARGE:
+      return JETBRAINSMONO_16_FONT_ID;
+    case EXTRA_LARGE:
+      return JETBRAINSMONO_18_FONT_ID;
   }
 }

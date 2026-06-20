@@ -38,7 +38,7 @@ constexpr size_t IMAGE_DIMENSION_PREFIX_BYTES = 16 * 1024;
 constexpr size_t IMAGE_DIMENSION_PREFIX_CHUNK = 2048;
 
 constexpr const char* HEADER_TAGS[] = {"h1", "h2", "h3", "h4", "h5", "h6"};
-constexpr const char* BLOCK_TAGS[] = {"p", "li", "div", "br", "blockquote"};
+constexpr const char* BLOCK_TAGS[] = {"p", "li", "div", "br", "blockquote", "pre"};
 constexpr const char* BOLD_TAGS[] = {"b", "strong"};
 constexpr const char* ITALIC_TAGS[] = {"i", "em"};
 constexpr const char* UNDERLINE_TAGS[] = {"u", "ins"};
@@ -428,6 +428,105 @@ void ChapterHtmlSlimParser::flushPartWordBuffer() {
   nextWordContinues = false;
 }
 
+void ChapterHtmlSlimParser::appendPreformattedText(const char* s, const int len) {
+  if (lowMemoryAbort || !currentTextBlock) {
+    return;
+  }
+
+  constexpr int TAB_WIDTH = 4;
+
+  // Emit `count` space glyphs as one or more space tokens. `continues` controls
+  // whether the first token attaches to the previous token (no inter-word gap);
+  // additional chunks always attach.
+  auto emitSpaces = [this](int count, bool continues) {
+    while (count > 0) {
+      const int chunk = std::min(count, MAX_WORD_SIZE);
+      for (int k = 0; k < chunk; k++) partWordBuffer[k] = ' ';
+      partWordBufferIndex = chunk;
+      nextWordContinues = continues;
+      flushPartWordBuffer();
+      continues = true;
+      count -= chunk;
+    }
+  };
+
+  for (int i = 0; i < len; i++) {
+    const char c = s[i];
+
+    if (c == '\r') {
+      continue;  // CRLF: the break is driven by the '\n'
+    }
+
+    if (c == '\n') {
+      // HTML ignores a single newline immediately following the <pre> start tag.
+      if (preSwallowLeadingNewline && !preLineHasContent && partWordBufferIndex == 0 && preSpaceRun == 0) {
+        preSwallowLeadingNewline = false;
+        continue;
+      }
+      preSwallowLeadingNewline = false;
+      if (partWordBufferIndex > 0) {
+        flushPartWordBuffer();
+        preLineHasContent = true;
+      }
+      preSpaceRun = 0;  // drop trailing spaces at end of line
+      // Preserve blank lines: give an otherwise-empty line a glyph so it keeps height.
+      if (!preLineHasContent) {
+        emitSpaces(1, /*continues=*/false);
+      }
+      nextWordContinues = false;
+      preLineHasWord = false;
+      preLineHasContent = false;
+      // Continuation code lines carry no top/bottom block spacing — the <pre>'s top
+      // margin stays on the first line and its bottom margin is applied on close.
+      BlockStyle codeLineStyle = blockStyleStack.back().withoutBottom();
+      codeLineStyle.marginTop = 0;
+      codeLineStyle.paddingTop = 0;
+      startNewTextBlock(codeLineStyle);
+      continue;
+    }
+
+    if (c == ' ' || c == '\t') {
+      preSwallowLeadingNewline = false;
+      if (partWordBufferIndex > 0) {
+        flushPartWordBuffer();
+        preLineHasWord = true;
+        preLineHasContent = true;
+      }
+      preSpaceRun += (c == '\t') ? TAB_WIDTH : 1;
+      continue;
+    }
+
+    // Non-space character: flush any pending spaces before (re)starting the word.
+    preSwallowLeadingNewline = false;
+    if (preSpaceRun > 0) {
+      if (!preLineHasWord) {
+        // Leading indentation: emit as the first token(s) on the line (no gap before),
+        // and attach the upcoming word so spacing is exact.
+        emitSpaces(preSpaceRun, /*continues=*/false);
+        nextWordContinues = true;
+      } else {
+        // Interior run: the breakable auto-gap before the next word supplies one
+        // space cell; emit the remaining (run - 1) as attached spaces for an exact total.
+        if (preSpaceRun > 1) {
+          emitSpaces(preSpaceRun - 1, /*continues=*/true);
+        }
+        nextWordContinues = false;  // next word is breakable and gets one space-gap
+      }
+      preSpaceRun = 0;
+      preLineHasContent = true;
+    }
+
+    // Accumulate the word character, guarding the buffer like the normal text path.
+    if (partWordBufferIndex >= MAX_WORD_SIZE) {
+      flushPartWordBuffer();
+      nextWordContinues = true;
+      preLineHasWord = true;
+      preLineHasContent = true;
+    }
+    partWordBuffer[partWordBufferIndex++] = c;
+  }
+}
+
 // start a new text block if needed
 void ChapterHtmlSlimParser::startNewTextBlock(const BlockStyle& blockStyle) {
   if (shouldAbortForLowMemory("text block start")) {
@@ -461,13 +560,21 @@ void ChapterHtmlSlimParser::startNewTextBlock(const BlockStyle& blockStyle) {
   if (lowMemoryAbort) {
     return;
   }
-  currentTextBlock.reset(new (std::nothrow) ParsedText(extraParagraphSpacing, forceParagraphIndents, hyphenationEnabled,
-                                                       focusReadingEnabled, blockStyle));
+  // Code blocks (<pre>) render in the monospace font and disable prose features
+  // (hyphenation, paragraph indents, focus/bionic splits, extra paragraph spacing)
+  // so each source line lays out verbatim.
+  const bool isCode = preformattedDepth != INT_MAX;
+  currentTextBlock.reset(new (std::nothrow) ParsedText(
+      isCode ? false : extraParagraphSpacing, isCode ? false : forceParagraphIndents,
+      isCode ? false : hyphenationEnabled, isCode ? false : focusReadingEnabled, blockStyle));
   if (!currentTextBlock) {
     const auto heap = MemoryBudget::snapshot();
     LOG_ERR("EHP", "Failed to create text block (%u free, %u max alloc)", heap.freeHeap, heap.maxAllocHeap);
     lowMemoryAbort = true;
     return;
+  }
+  if (isCode) {
+    currentTextBlock->setFontIdOverride(monospaceFontId);
   }
   wordsExtractedInBlock = 0;
 }
@@ -1483,6 +1590,20 @@ void XMLCALL ChapterHtmlSlimParser::startElement(void* userData, const XML_Char*
       self->startNewTextBlock(self->blockStyleStack.back().withoutBottom());
     } else {
       self->currentCssStyle = cssStyle;
+      if (strcmp(name, "pre") == 0) {
+        // Preformatted code: left-aligned, no first-line indent, whitespace preserved.
+        // Mark the preformatted depth before startNewTextBlock so the new block is
+        // created as a monospace, non-hyphenated code block.
+        userAlignmentBlockStyle.alignment = CssTextAlign::Left;
+        userAlignmentBlockStyle.textAlignDefined = true;
+        userAlignmentBlockStyle.textIndent = 0;
+        userAlignmentBlockStyle.textIndentDefined = true;
+        self->preformattedDepth = std::min(self->preformattedDepth, self->depth);
+        self->preSpaceRun = 0;
+        self->preLineHasWord = false;
+        self->preLineHasContent = false;
+        self->preSwallowLeadingNewline = true;
+      }
       const auto accumulated = self->blockStyleStack.back().getCombinedBlockStyle(userAlignmentBlockStyle,
                                                                                   BlockStyle::CombineAxis::Horizontal);
       self->blockStyleStack.push_back(accumulated);
@@ -1609,6 +1730,23 @@ void XMLCALL ChapterHtmlSlimParser::startElement(void* userData, const XML_Char*
     }
     self->inlineStyleStack.push_back(entry);
     self->updateEffectiveInlineStyle();
+  } else if (strcmp(name, "code") == 0) {
+    // Inline <code> outside a <pre> is rendered bold in the reader font so it stands
+    // out (true monospace would require per-word fonts in the justification engine).
+    // Inside <pre> the whole block is already monospace, so <code> is a no-op there.
+    if (self->preformattedDepth == INT_MAX) {
+      if (self->partWordBufferIndex > 0) {
+        self->flushPartWordBuffer();
+        self->nextWordContinues = true;
+      }
+      self->boldUntilDepth = std::min(self->boldUntilDepth, self->depth);
+      StyleStackEntry entry;
+      entry.depth = self->depth;
+      entry.hasBold = true;
+      entry.bold = true;
+      self->inlineStyleStack.push_back(entry);
+      self->updateEffectiveInlineStyle();
+    }
   } else if (strcmp(name, "span") == 0 || !isHeaderOrBlock(name)) {
     // Handle span and other inline elements for CSS styling
     if (cssStyle.hasFontWeight() || cssStyle.hasFontStyle() || cssStyle.hasTextDecoration() ||
@@ -1664,6 +1802,12 @@ void XMLCALL ChapterHtmlSlimParser::characterData(void* userData, const XML_Char
 
   // Middle of skip
   if (self->skipUntilDepth < self->depth) {
+    return;
+  }
+
+  // Preformatted <pre> content: preserve whitespace and newlines verbatim.
+  if (self->preformattedDepth != INT_MAX) {
+    self->appendPreformattedText(s, len);
     return;
   }
 
@@ -1958,6 +2102,18 @@ void XMLCALL ChapterHtmlSlimParser::endElement(void* userData, const XML_Char* n
     self->strikeUntilDepth = INT_MAX;
   }
 
+  // Leaving <pre> preformatted block: flush trailing word, drop pending spaces.
+  if (self->preformattedDepth == self->depth) {
+    if (self->partWordBufferIndex > 0) {
+      self->flushPartWordBuffer();
+    }
+    self->preformattedDepth = INT_MAX;
+    self->preSpaceRun = 0;
+    self->preLineHasWord = false;
+    self->preLineHasContent = false;
+    self->preSwallowLeadingNewline = false;
+  }
+
   // Pop from inline style stack if we pushed an entry at this depth
   // This handles all inline elements: b, i, u, span, etc.
   if (!self->inlineStyleStack.empty() && self->inlineStyleStack.back().depth == self->depth) {
@@ -2110,7 +2266,10 @@ void ChapterHtmlSlimParser::addLineToPage(std::shared_ptr<TextBlock> line) {
     return;
   }
 
-  const int lineHeight = renderer.getLineHeight(fontId) * lineCompression;
+  // Code lines carry a font override (monospace); advance by that font's line height
+  // so code rows are spaced for the mono font rather than the reader's family.
+  const int lineFontId = (line && line->getFontIdOverride() != 0) ? line->getFontIdOverride() : fontId;
+  const int lineHeight = renderer.getLineHeight(lineFontId) * lineCompression;
 
   if (!currentPage) {
     if (!startNewPage("line layout")) {
@@ -2201,8 +2360,9 @@ void ChapterHtmlSlimParser::makePages() {
     currentPageNextY += blockStyle.paddingBottom;
   }
 
-  // Extra paragraph spacing if enabled (default behavior)
-  if (extraParagraphSpacing) {
+  // Extra paragraph spacing if enabled (default behavior). Skipped for code blocks:
+  // each <pre> source line is its own block, so this would double-space the code.
+  if (extraParagraphSpacing && currentTextBlock->getFontIdOverride() == 0) {
     currentPageNextY += lineHeight / 2;
   }
 }

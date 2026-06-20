@@ -11,7 +11,7 @@
 #include "parsers/ChapterHtmlSlimParser.h"
 
 namespace {
-constexpr uint8_t SECTION_FILE_VERSION = 30;
+constexpr uint8_t SECTION_FILE_VERSION = 31;
 constexpr uint32_t HEADER_SIZE = sizeof(uint8_t) + sizeof(int) + sizeof(float) + sizeof(bool) + sizeof(bool) +
                                  sizeof(uint8_t) + sizeof(uint16_t) + sizeof(uint16_t) + sizeof(uint16_t) +
                                  sizeof(bool) + sizeof(bool) + sizeof(bool) + sizeof(uint8_t) + sizeof(uint32_t) +
@@ -159,11 +159,11 @@ bool Section::clearCache() const {
   return true;
 }
 
-bool Section::createSectionFile(const int fontId, const float lineCompression, const bool extraParagraphSpacing,
-                                const bool forceParagraphIndents, const uint8_t paragraphAlignment,
-                                const uint16_t viewportWidth, const uint16_t viewportHeight,
-                                const bool hyphenationEnabled, const bool focusReadingEnabled,
-                                const bool embeddedStyle, const uint8_t imageRendering,
+bool Section::createSectionFile(const int fontId, const int monospaceFontId, const float lineCompression,
+                                const bool extraParagraphSpacing, const bool forceParagraphIndents,
+                                const uint8_t paragraphAlignment, const uint16_t viewportWidth,
+                                const uint16_t viewportHeight, const bool hyphenationEnabled,
+                                const bool focusReadingEnabled, const bool embeddedStyle, const uint8_t imageRendering,
                                 const std::function<void()>& popupFn) {
   const auto localPath = epub->getSpineItem(spineIndex).href;
   const auto tmpHtmlPath = epub->getCachePath() + "/.tmp_" + std::to_string(spineIndex) + ".html";
@@ -248,7 +248,8 @@ bool Section::createSectionFile(const int fontId, const float lineCompression, c
   }
 
   ChapterHtmlSlimParser visitor(
-      epub, tmpHtmlPath, renderer, fontId, lineCompression, extraParagraphSpacing, forceParagraphIndents,
+      epub, tmpHtmlPath, renderer, fontId, monospaceFontId, lineCompression, extraParagraphSpacing,
+      forceParagraphIndents,
       paragraphAlignment, viewportWidth, viewportHeight, hyphenationEnabled, focusReadingEnabled,
       [this, &lut](std::unique_ptr<Page> page, const ChapterHtmlSlimParser::ParagraphLutEntry syncEntry) {
         lut.push_back({this->onPageComplete(std::move(page)), syncEntry.xhtmlByteOffset, syncEntry.paragraphIndex,

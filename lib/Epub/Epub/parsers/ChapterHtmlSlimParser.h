@@ -51,6 +51,14 @@ class ChapterHtmlSlimParser {
   int italicUntilDepth = INT_MAX;
   int underlineUntilDepth = INT_MAX;
   int strikeUntilDepth = INT_MAX;
+  // <pre> preformatted block tracking. When active (!= INT_MAX), characterData
+  // preserves whitespace (indentation, runs of spaces, tabs) and newlines become
+  // hard line breaks, with each <pre> line laid out in the monospace code font.
+  int preformattedDepth = INT_MAX;
+  int preSpaceRun = 0;            // pending consecutive spaces awaiting emission in <pre>
+  bool preLineHasWord = false;    // a non-space token already emitted on the current <pre> line
+  bool preLineHasContent = false; // any token emitted on the current <pre> line (for blank-line height)
+  bool preSwallowLeadingNewline = false;  // ignore one newline right after <pre> (HTML rule)
   // buffer for building up words from characters, will auto break if longer than this
   // leave one char at end for null pointer
   char partWordBuffer[MAX_WORD_SIZE + 1] = {};
@@ -60,6 +68,7 @@ class ChapterHtmlSlimParser {
   std::unique_ptr<Page> currentPage = nullptr;
   int16_t currentPageNextY = 0;
   int fontId;
+  int monospaceFontId;  // code-block font (JetBrains Mono) for <pre>/<code> blocks
   float lineCompression;
   bool extraParagraphSpacing;
   bool forceParagraphIndents;
@@ -157,6 +166,10 @@ class ChapterHtmlSlimParser {
   void startNewTextBlock(const BlockStyle& blockStyle);
   void flushPendingAnchor();
   void flushPartWordBuffer();
+  // Whitespace-preserving text handler for <pre> content. Splits into word and
+  // explicit space tokens so indentation/spacing survive while still allowing the
+  // justification engine to wrap over-long code lines.
+  void appendPreformattedText(const char* s, int len);
   void makePages();
   void emitPage(uint32_t xhtmlByteOffset);
   void emitHorizontalRule(const BlockStyle& blockStyle);
@@ -174,7 +187,8 @@ class ChapterHtmlSlimParser {
 
  public:
   explicit ChapterHtmlSlimParser(std::shared_ptr<Epub> epub, const std::string& filepath, GfxRenderer& renderer,
-                                 const int fontId, const float lineCompression, const bool extraParagraphSpacing,
+                                 const int fontId, const int monospaceFontId, const float lineCompression,
+                                 const bool extraParagraphSpacing,
                                  const bool forceParagraphIndents, const uint8_t paragraphAlignment,
                                  const uint16_t viewportWidth, const uint16_t viewportHeight,
                                  const bool hyphenationEnabled, const bool focusReadingEnabled,
@@ -188,6 +202,7 @@ class ChapterHtmlSlimParser {
         filepath(filepath),
         renderer(renderer),
         fontId(fontId),
+        monospaceFontId(monospaceFontId),
         lineCompression(lineCompression),
         extraParagraphSpacing(extraParagraphSpacing),
         forceParagraphIndents(forceParagraphIndents),

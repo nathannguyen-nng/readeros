@@ -36,10 +36,10 @@ class Section {
                        uint8_t paragraphAlignment, uint16_t viewportWidth, uint16_t viewportHeight,
                        bool hyphenationEnabled, bool focusReadingEnabled, bool embeddedStyle, uint8_t imageRendering);
   bool clearCache() const;
-  bool createSectionFile(int fontId, float lineCompression, bool extraParagraphSpacing, bool forceParagraphIndents,
-                         uint8_t paragraphAlignment, uint16_t viewportWidth, uint16_t viewportHeight,
-                         bool hyphenationEnabled, bool focusReadingEnabled, bool embeddedStyle, uint8_t imageRendering,
-                         const std::function<void()>& popupFn = nullptr);
+  bool createSectionFile(int fontId, int monospaceFontId, float lineCompression, bool extraParagraphSpacing,
+                         bool forceParagraphIndents, uint8_t paragraphAlignment, uint16_t viewportWidth,
+                         uint16_t viewportHeight, bool hyphenationEnabled, bool focusReadingEnabled, bool embeddedStyle,
+                         uint8_t imageRendering, const std::function<void()>& popupFn = nullptr);
   std::unique_ptr<Page> loadPageFromSectionFile();
 
   // Look up the page number for an anchor id from the section cache file.
