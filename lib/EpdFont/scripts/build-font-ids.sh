@@ -47,6 +47,6 @@ echo "#define NOTOSANS_12_FONT_ID ($(font_id ./notosans_12_regular.h ./notosans_
 echo "#define NOTOSANS_14_FONT_ID ($(font_id ./notosans_14_regular.h ./notosans_14_bold.h ./notosans_14_bolditalic.h ./notosans_14_italic.h))"
 echo "#define NOTOSANS_16_FONT_ID ($(font_id ./notosans_16_regular.h ./notosans_16_bold.h ./notosans_16_bolditalic.h ./notosans_16_italic.h))"
 echo "#define NOTOSANS_18_FONT_ID ($(font_id ./notosans_18_regular.h ./notosans_18_bold.h ./notosans_18_bolditalic.h ./notosans_18_italic.h))"
-echo "#define UI_10_FONT_ID ($(font_id ./bitter_10_regular.h ./bitter_10_bold.h))"
-echo "#define UI_12_FONT_ID ($(font_id ./bitter_12_regular.h ./bitter_12_bold.h))"
+echo "#define UI_10_FONT_ID ($(font_id ./inter_10_regular.h ./inter_10_bold.h))"
+echo "#define UI_12_FONT_ID ($(font_id ./inter_12_regular.h ./inter_12_bold.h))"
 echo "#define SMALL_FONT_ID ($(font_id ./notosans_8_regular.h))"

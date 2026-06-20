@@ -138,17 +138,17 @@ EpdFontFamily notosans18FontFamily(&notosans18RegularFont, &notosans18BoldFont, 
 EpdFont smallFont(&notosans_8_regular);
 EpdFontFamily smallFontFamily(&smallFont);
 
-EpdFont ui10RegularFont(&bitter_10_regular);
-EpdFont ui10BoldFont(&bitter_10_bold);
+EpdFont ui10RegularFont(&inter_10_regular);
+EpdFont ui10BoldFont(&inter_10_bold);
 EpdFontFamily ui10FontFamily(&ui10RegularFont, &ui10BoldFont);
 
-EpdFont ui12RegularFont(&bitter_12_regular);
-EpdFont ui12BoldFont(&bitter_12_bold);
+EpdFont ui12RegularFont(&inter_12_regular);
+EpdFont ui12BoldFont(&inter_12_bold);
 EpdFontFamily ui12FontFamily(&ui12RegularFont, &ui12BoldFont);
 
 namespace {
 
-// Bitter covers the full Vietnamese glyph set (Ơơ Ưư Đđ, precomposed Latin
+// Inter covers the full Vietnamese glyph set (Ơơ Ưư Đđ, precomposed Latin
 // Extended Additional, combining tone marks), so it is used as the UI font for
 // every language. This keeps UI text and dictionary definitions (which render
 // with UI_10_FONT_ID / UI_12_FONT_ID) legible regardless of the UI language.
@@ -156,7 +156,7 @@ void applyUiFontsForLanguage(const Language lang) {
   renderer.insertFont(SMALL_FONT_ID, smallFontFamily);
   renderer.insertFont(UI_10_FONT_ID, ui10FontFamily);
   renderer.insertFont(UI_12_FONT_ID, ui12FontFamily);
-  LOG_INF("MAIN", "UI fonts: Bitter UI stack for language %s", I18N.getLanguageName(lang));
+  LOG_INF("MAIN", "UI fonts: Inter UI stack for language %s", I18N.getLanguageName(lang));
 }
 
 }  // namespace

@@ -51,7 +51,7 @@
 #include <builtinFonts/notosans_18_bolditalic.h>
 #include <builtinFonts/notosans_18_italic.h>
 #include <builtinFonts/notosans_18_regular.h>
-#include <builtinFonts/bitter_10_bold.h>
-#include <builtinFonts/bitter_10_regular.h>
-#include <builtinFonts/bitter_12_bold.h>
-#include <builtinFonts/bitter_12_regular.h>
+#include <builtinFonts/inter_10_bold.h>
+#include <builtinFonts/inter_10_regular.h>
+#include <builtinFonts/inter_12_bold.h>
+#include <builtinFonts/inter_12_regular.h>
