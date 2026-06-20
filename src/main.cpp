@@ -132,47 +132,25 @@ EpdFontFamily notosans18FontFamily(&notosans18RegularFont, &notosans18BoldFont, 
 EpdFont smallFont(&notosans_8_regular);
 EpdFontFamily smallFontFamily(&smallFont);
 
-EpdFont ui10RegularFont(&ubuntu_10_regular);
-EpdFont ui10BoldFont(&ubuntu_10_bold);
+EpdFont ui10RegularFont(&bitter_10_regular);
+EpdFont ui10BoldFont(&bitter_10_bold);
 EpdFontFamily ui10FontFamily(&ui10RegularFont, &ui10BoldFont);
 
-EpdFont ui12RegularFont(&ubuntu_12_regular);
-EpdFont ui12BoldFont(&ubuntu_12_bold);
+EpdFont ui12RegularFont(&bitter_12_regular);
+EpdFont ui12BoldFont(&bitter_12_bold);
 EpdFontFamily ui12FontFamily(&ui12RegularFont, &ui12BoldFont);
 
 namespace {
 
-bool shouldUseNotoUiFonts(const Language lang) {
-#ifdef OMIT_FONTS
-  (void)lang;
-  return false;
-#else
-  return lang == Language::VI;
-#endif
-}
-
+// Bitter covers the full Vietnamese glyph set (Ơơ Ưư Đđ, precomposed Latin
+// Extended Additional, combining tone marks), so it is used as the UI font for
+// every language. This keeps UI text and dictionary definitions (which render
+// with UI_10_FONT_ID / UI_12_FONT_ID) legible regardless of the UI language.
 void applyUiFontsForLanguage(const Language lang) {
   renderer.insertFont(SMALL_FONT_ID, smallFontFamily);
-
-#ifdef OMIT_FONTS
-  (void)lang;
   renderer.insertFont(UI_10_FONT_ID, ui10FontFamily);
   renderer.insertFont(UI_12_FONT_ID, ui12FontFamily);
-#else
-  if (shouldUseNotoUiFonts(lang)) {
-    // Keep Vietnamese UI at 10 pt for both slots to preserve existing layouts
-    // while still providing full glyph coverage.
-    renderer.insertFont(UI_10_FONT_ID, notosans10FontFamily);
-    renderer.insertFont(UI_12_FONT_ID, notosans10FontFamily);
-    LOG_INF("MAIN", "UI fonts: Noto Sans 8/10/10 for language %s", I18N.getLanguageName(lang));
-    return;
-  }
-
-  renderer.insertFont(UI_10_FONT_ID, ui10FontFamily);
-  renderer.insertFont(UI_12_FONT_ID, ui12FontFamily);
-#endif
-
-  LOG_INF("MAIN", "UI fonts: default UI stack for language %s", I18N.getLanguageName(lang));
+  LOG_INF("MAIN", "UI fonts: Bitter UI stack for language %s", I18N.getLanguageName(lang));
 }
 
 }  // namespace

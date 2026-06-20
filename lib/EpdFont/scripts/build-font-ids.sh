@@ -51,6 +51,6 @@ echo "#define OPENDYSLEXIC_8_FONT_ID ($(font_id ./opendyslexic_8_regular.h ./ope
 echo "#define OPENDYSLEXIC_10_FONT_ID ($(font_id ./opendyslexic_10_regular.h ./opendyslexic_10_bold.h ./opendyslexic_10_bolditalic.h ./opendyslexic_10_italic.h))"
 echo "#define OPENDYSLEXIC_12_FONT_ID ($(font_id ./opendyslexic_12_regular.h ./opendyslexic_12_bold.h ./opendyslexic_12_bolditalic.h ./opendyslexic_12_italic.h))"
 echo "#define OPENDYSLEXIC_14_FONT_ID ($(font_id ./opendyslexic_14_regular.h ./opendyslexic_14_bold.h ./opendyslexic_14_bolditalic.h ./opendyslexic_14_italic.h))"
-echo "#define UI_10_FONT_ID ($(font_id ./ubuntu_10_regular.h ./ubuntu_10_bold.h))"
-echo "#define UI_12_FONT_ID ($(font_id ./ubuntu_12_regular.h ./ubuntu_12_bold.h))"
+echo "#define UI_10_FONT_ID ($(font_id ./bitter_10_regular.h ./bitter_10_bold.h))"
+echo "#define UI_12_FONT_ID ($(font_id ./bitter_12_regular.h ./bitter_12_bold.h))"
 echo "#define SMALL_FONT_ID ($(font_id ./notosans_8_regular.h))"
