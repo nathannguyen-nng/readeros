@@ -2,6 +2,7 @@
 
 #include <Epub.h>
 #include <FsHelpers.h>
+#include <FontCacheManager.h>
 #include <GfxRenderer.h>
 #include <HalStorage.h>
 #include <I18n.h>
@@ -880,20 +881,36 @@ void SleepActivity::renderOverlaySleepScreen() const {
   const auto pageWidth = renderer.getScreenWidth();
   const auto pageHeight = renderer.getScreenHeight();
 
-  // Composite a transparent PNG on top of the page: transparent pixels leave the page
-  // showing through, opaque pixels are drawn in their grayscale value. Prefer a PNG
-  // from the configured sleep folder, then fall back to /sleep.png.
-  bool overlayDrawn = false;
+  // Pick the overlay image first (this does SD I/O and transient allocations).
+  // Prefer a PNG from the configured sleep folder, then fall back to /sleep.png.
+  std::string overlayPngPath;
   CustomSleepImage selected;
   if (selectConfiguredCustomSleepImage(selected) && selected.isPng) {
-    overlayDrawn = PngSleepRenderer::drawTransparentPng(selected.path, renderer, 0, 0, pageWidth, pageHeight);
+    overlayPngPath = selected.path;
+  }
+
+  // Free font/glyph caches left over from the reading session before the PNG
+  // decoder allocates (~44 KB contiguous). After a book is open the heap is often
+  // fragmented enough that the decoder allocation intermittently fails, which left
+  // the page showing with no overlay on top. The page is already a bitmap in the
+  // framebuffer, no further text is drawn in this path, and the device deep-sleeps
+  // right after, so dropping these caches is safe and reclaims a contiguous block.
+  if (auto* fontCacheManager = renderer.getFontCacheManager()) {
+    fontCacheManager->clearCache();
+  }
+
+  // Composite the transparent PNG on top of the page: transparent pixels leave the
+  // page showing through, opaque pixels are drawn in their grayscale value.
+  bool overlayDrawn = false;
+  if (!overlayPngPath.empty()) {
+    overlayDrawn = PngSleepRenderer::drawTransparentPng(overlayPngPath, renderer, 0, 0, pageWidth, pageHeight);
   }
   if (!overlayDrawn) {
     overlayDrawn = PngSleepRenderer::drawTransparentPng("/sleep.png", renderer, 0, 0, pageWidth, pageHeight);
   }
 
   if (!overlayDrawn) {
-    LOG_DBG("SLP", "Page overlay: no PNG overlay found; showing captured page only");
+    LOG_DBG("SLP", "Page overlay: no PNG overlay drawn; showing captured page only");
   }
 
   displaySleepBuffer(renderer);
