@@ -36,6 +36,7 @@ bool canUseSleepCache(const Bitmap& bitmap) {
 
 bool usesCustomSleepImages() {
   return SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM ||
+         SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::PAGE_OVERLAY ||
          (SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::COVER_CUSTOM &&
           !APP_STATE.lastSleepFromReader);
 }
@@ -623,6 +624,17 @@ bool renderBitmapStatsSleepScreen(GfxRenderer& renderer, const std::string& sour
 
 void SleepActivity::onEnter() {
   Activity::onEnter();
+
+  // PAGE_OVERLAY: snapshot the live reader page before anything (popup, orientation
+  // change, dark-mode toggle) disturbs the framebuffer, so it can be restored as the
+  // background behind the transparent PNG overlay. Only meaningful when we slept from
+  // a reader; otherwise the overlay falls back to a blank background.
+  overlayBackgroundStored = false;
+  if (SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::PAGE_OVERLAY && APP_STATE.lastSleepFromReader) {
+    overlayCaptureOrientation = renderer.getOrientation();
+    overlayBackgroundStored = renderer.storeBwBuffer();
+  }
+
   renderer.clearNextRefreshOverride();
   const bool restoreDarkMode = renderer.isDarkMode();
   if (restoreDarkMode) {
@@ -672,6 +684,9 @@ void SleepActivity::onEnter() {
       break;
     case (CrossPointSettings::SLEEP_SCREEN_MODE::CUSTOM_STATS_V2):
       renderCustomStatsSleepScreen(true);
+      break;
+    case (CrossPointSettings::SLEEP_SCREEN_MODE::PAGE_OVERLAY):
+      renderOverlaySleepScreen();
       break;
     default:
       renderDefaultSleepScreen();
@@ -844,6 +859,44 @@ bool SleepActivity::renderPngSleepScreen(const std::string& sourcePath) const {
 
   displaySleepBuffer(renderer);
   return true;
+}
+
+void SleepActivity::renderOverlaySleepScreen() const {
+  // When we did not sleep from a reader there is no page to overlay. Show the sleep
+  // image on a blank (white) background by delegating to the standard custom sleep
+  // screen, which already handles the configured folder, /sleep.png and /sleep.bmp.
+  if (!overlayBackgroundStored) {
+    renderer.setOrientation(GfxRenderer::Orientation::Portrait);
+    renderer.clearScreen();
+    renderCustomSleepScreen();
+    return;
+  }
+
+  // Restore the captured reader page as the background (at the orientation it was
+  // captured in, since restoreBwBuffer is a raw framebuffer copy).
+  renderer.setOrientation(overlayCaptureOrientation);
+  renderer.restoreBwBuffer();
+
+  const auto pageWidth = renderer.getScreenWidth();
+  const auto pageHeight = renderer.getScreenHeight();
+
+  // Composite a transparent PNG on top of the page: transparent pixels leave the page
+  // showing through, opaque pixels are drawn in their grayscale value. Prefer a PNG
+  // from the configured sleep folder, then fall back to /sleep.png.
+  bool overlayDrawn = false;
+  CustomSleepImage selected;
+  if (selectConfiguredCustomSleepImage(selected) && selected.isPng) {
+    overlayDrawn = PngSleepRenderer::drawTransparentPng(selected.path, renderer, 0, 0, pageWidth, pageHeight);
+  }
+  if (!overlayDrawn) {
+    overlayDrawn = PngSleepRenderer::drawTransparentPng("/sleep.png", renderer, 0, 0, pageWidth, pageHeight);
+  }
+
+  if (!overlayDrawn) {
+    LOG_DBG("SLP", "Page overlay: no PNG overlay found; showing captured page only");
+  }
+
+  displaySleepBuffer(renderer);
 }
 
 bool SleepActivity::resolveLastBookCoverPath(std::string& coverBmpPath) const {

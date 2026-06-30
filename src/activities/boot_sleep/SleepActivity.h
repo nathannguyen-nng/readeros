@@ -21,6 +21,13 @@ class SleepActivity final : public Activity {
   void renderCustomStatsSleepScreen(bool footerOnly = false) const;
   void renderBitmapSleepScreen(const Bitmap& bitmap, const std::string& sourcePath = "") const;
   bool renderPngSleepScreen(const std::string& sourcePath) const;
+  void renderOverlaySleepScreen() const;
   void renderBlankSleepScreen() const;
   bool resolveLastBookCoverPath(std::string& coverBmpPath) const;
+
+  // PAGE_OVERLAY: the reader page currently in the framebuffer is captured at the
+  // very start of onEnter() (before any popup/orientation change) so it can be
+  // restored as the background and have a transparent PNG composited on top.
+  bool overlayBackgroundStored = false;
+  GfxRenderer::Orientation overlayCaptureOrientation = GfxRenderer::Orientation::Portrait;
 };
