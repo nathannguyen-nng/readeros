@@ -87,6 +87,7 @@ class ChapterHtmlSlimParser {
   bool lowMemoryImageFallback = false;
   bool lowMemoryAbort = false;
   bool attemptedTextLayoutFontCacheRelease = false;
+  bool loggedSoftLowMemoryContinuation = false;
 
   std::string lastImageDimensionsPath;
   ImageDimensions lastImageDimensions = {0, 0};

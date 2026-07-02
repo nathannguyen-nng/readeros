@@ -29,10 +29,13 @@ constexpr size_t MAX_ANCHORS_PER_CHAPTER = 1024;
 constexpr size_t MAX_REFERENCED_ANCHORS_PER_CHAPTER = 1024;
 constexpr uint16_t MAX_REPEATED_IMAGE_RENDERS_PER_CHAPTER = 16;
 constexpr uint32_t LONG_PARSE_SERVICE_INTERVAL_MS = 50;
-constexpr uint32_t MIN_FREE_HEAP_FOR_TEXT_LAYOUT = 44 * 1024;
-constexpr uint32_t MIN_MAX_ALLOC_FOR_TEXT_LAYOUT = 32 * 1024;
+constexpr uint32_t SOFT_MIN_FREE_HEAP_FOR_TEXT_LAYOUT = 44 * 1024;
+constexpr uint32_t SOFT_MIN_MAX_ALLOC_FOR_TEXT_LAYOUT = 32 * 1024;
+constexpr uint32_t HARD_MIN_FREE_HEAP_FOR_TEXT_LAYOUT = 30 * 1024;
+constexpr uint32_t HARD_MIN_MAX_ALLOC_FOR_TEXT_LAYOUT = 20 * 1024;
 constexpr uint32_t MIN_FREE_HEAP_FOR_TABLE_BUFFERING = 64 * 1024;
 constexpr uint32_t MIN_MAX_ALLOC_FOR_TABLE_BUFFERING = 40 * 1024;
+constexpr uint16_t TEXT_BLOCK_SPLIT_WORD_LIMIT = 350;
 constexpr uint8_t INITIAL_PAGE_ELEMENT_RESERVE = 8;
 constexpr uint8_t INITIAL_TABLE_FRAGMENT_ROW_RESERVE = 8;
 constexpr uint32_t PAGE_ELEMENT_RESERVE_MIN_MAX_ALLOC = 1024;
@@ -184,7 +187,7 @@ bool ChapterHtmlSlimParser::shouldAbortForLowMemory(const char* stage) {
   }
 
   auto heap = MemoryBudget::snapshot();
-  if (MemoryBudget::hasHeap(heap, MIN_FREE_HEAP_FOR_TEXT_LAYOUT, MIN_MAX_ALLOC_FOR_TEXT_LAYOUT)) {
+  if (MemoryBudget::hasHeap(heap, SOFT_MIN_FREE_HEAP_FOR_TEXT_LAYOUT, SOFT_MIN_MAX_ALLOC_FOR_TEXT_LAYOUT)) {
     return false;
   }
 
@@ -195,7 +198,7 @@ bool ChapterHtmlSlimParser::shouldAbortForLowMemory(const char* stage) {
       LOG_DBG("EHP", "Released SD font caches before %s: free=%u->%u maxAlloc=%u->%u", stage, heap.freeHeap,
               afterRelease.freeHeap, heap.maxAllocHeap, afterRelease.maxAllocHeap);
       heap = afterRelease;
-      if (MemoryBudget::hasHeap(heap, MIN_FREE_HEAP_FOR_TEXT_LAYOUT, MIN_MAX_ALLOC_FOR_TEXT_LAYOUT)) {
+      if (MemoryBudget::hasHeap(heap, SOFT_MIN_FREE_HEAP_FOR_TEXT_LAYOUT, SOFT_MIN_MAX_ALLOC_FOR_TEXT_LAYOUT)) {
         return false;
       }
     }
@@ -211,12 +214,21 @@ bool ChapterHtmlSlimParser::shouldAbortForLowMemory(const char* stage) {
             static_cast<unsigned>(ruleCount), stage, beforeCssClear.freeHeap, afterCssClear.freeHeap,
             beforeCssClear.maxAllocHeap, afterCssClear.maxAllocHeap);
     heap = afterCssClear;
-    if (MemoryBudget::hasHeap(heap, MIN_FREE_HEAP_FOR_TEXT_LAYOUT, MIN_MAX_ALLOC_FOR_TEXT_LAYOUT)) {
+    if (MemoryBudget::hasHeap(heap, SOFT_MIN_FREE_HEAP_FOR_TEXT_LAYOUT, SOFT_MIN_MAX_ALLOC_FOR_TEXT_LAYOUT)) {
       return false;
     }
   }
 
-  LOG_ERR("EHP", "Low heap during %s (%u free, %u max alloc); aborting section build", stage, heap.freeHeap,
+  if (MemoryBudget::hasHeap(heap, HARD_MIN_FREE_HEAP_FOR_TEXT_LAYOUT, HARD_MIN_MAX_ALLOC_FOR_TEXT_LAYOUT)) {
+    if (!loggedSoftLowMemoryContinuation) {
+      loggedSoftLowMemoryContinuation = true;
+      LOG_DBG("EHP", "Continuing section build below soft heap during %s (free=%u maxAlloc=%u)", stage, heap.freeHeap,
+              heap.maxAllocHeap);
+    }
+    return false;
+  }
+
+  LOG_ERR("EHP", "Critical low heap during %s (%u free, %u max alloc); aborting section build", stage, heap.freeHeap,
           heap.maxAllocHeap);
   lowMemoryAbort = true;
   return true;
@@ -233,7 +245,7 @@ bool ChapterHtmlSlimParser::startNewPage(const char* reason) {
   }
 
   const auto heap = MemoryBudget::snapshot();
-  if (MemoryBudget::hasHeap(heap, MIN_FREE_HEAP_FOR_TEXT_LAYOUT, PAGE_ELEMENT_RESERVE_MIN_MAX_ALLOC)) {
+  if (MemoryBudget::hasHeap(heap, SOFT_MIN_FREE_HEAP_FOR_TEXT_LAYOUT, PAGE_ELEMENT_RESERVE_MIN_MAX_ALLOC)) {
     currentPage->elements.reserve(INITIAL_PAGE_ELEMENT_RESERVE);
   }
   currentPageNextY = 0;
@@ -2044,11 +2056,11 @@ void XMLCALL ChapterHtmlSlimParser::characterData(void* userData, const XML_Char
     self->partWordBuffer[self->partWordBufferIndex++] = s[i];
   }
 
-  // If we have > 750 words buffered up, perform the layout and consume out all but the last line
+  // If a text block grows too large, perform layout and consume all but the last line
   // There should be enough here to build out 1-2 full pages and doing this will free up a lot of
   // memory.
   // Spotted when reading Intermezzo, there are some really long text blocks in there.
-  if (self->currentTextBlock && self->currentTextBlock->size() > 750) {
+  if (self->currentTextBlock && self->currentTextBlock->size() > TEXT_BLOCK_SPLIT_WORD_LIMIT) {
     LOG_DBG("EHP", "Text block too long, splitting into multiple pages");
     const int horizontalInset = self->currentTextBlock->getBlockStyle().totalHorizontalInset();
     const uint16_t effectiveWidth = (horizontalInset < self->viewportWidth)

@@ -1257,6 +1257,12 @@ void EpubReaderActivity::markCurrentBookAsFinished() {
 }
 
 void EpubReaderActivity::pageTurn(bool isForwardTurn) {
+  if (!section) {
+    nextPageNumber = 0;
+    requestUpdate();
+    return;
+  }
+
   READING_STATS.noteActivity();
   invalidateCurrentOverlayPageCache();
   const int oldSpineIndex = currentSpineIndex;
