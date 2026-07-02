@@ -5,14 +5,11 @@
 
 #include <algorithm>
 
-#include "AchievementsActivity.h"
 #include "BookmarksAppActivity.h"
 #include "DictionaryActivity.h"
 #include "FavoritesAppActivity.h"
-#include "FlashcardsAppActivity.h"
 #include "IfFoundActivity.h"
 #include "ReadingHeatmapActivity.h"
-#include "ReadingProfileActivity.h"
 #include "ReadingStatsActivity.h"
 #include "ScreenCleanActivity.h"
 #include "SleepAppActivity.h"
@@ -166,12 +163,6 @@ void AppsActivity::openSelectedApp() {
     case ShortcutId::ReadingHeatmap:
       activity = std::make_unique<ReadingHeatmapActivity>(renderer, mappedInput);
       break;
-    case ShortcutId::ReadingProfile:
-      activity = std::make_unique<ReadingProfileActivity>(renderer, mappedInput);
-      break;
-    case ShortcutId::Achievements:
-      activity = std::make_unique<AchievementsActivity>(renderer, mappedInput);
-      break;
     case ShortcutId::IfFound:
       activity = std::make_unique<IfFoundActivity>(renderer, mappedInput);
       break;
@@ -183,9 +174,6 @@ void AppsActivity::openSelectedApp() {
       break;
     case ShortcutId::Favorites:
       activity = std::make_unique<FavoritesAppActivity>(renderer, mappedInput);
-      break;
-    case ShortcutId::Flashcards:
-      activity = std::make_unique<FlashcardsAppActivity>(renderer, mappedInput);
       break;
     case ShortcutId::Dictionary:
       activity = std::make_unique<DictionaryActivity>(renderer, mappedInput);

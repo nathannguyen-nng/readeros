@@ -126,7 +126,7 @@ The Settings screen allows you to configure the device's behavior. There are a f
   - "Cover" - The book cover image (Note: this is experimental and may not work as expected)
   - "None" - A blank screen
   - "Cover + Custom" - The book cover image, falls back to "Custom" behavior
-  - "Reading Dashboard" - Reading goal, streak, totals, achievement progress, and recent-book context
+  - "Reading Dashboard" - Reading goal, streak, totals, and recent-book context
   - "Cover + Stats v1" - The book cover plus compact book/global reading stats
   - "Cover + Stats v2" - The book cover plus a compact global stats footer
   - "Custom + Stats v1" - Custom sleep image plus the same compact book/global reading stats
@@ -347,7 +347,7 @@ The **Sleep Screen** setting controls what is displayed when the device goes to 
 | **Custom** | A custom image from the SD card (see below). Falls back to **Dark** if no custom image is found. |
 | **Cover** | The cover of the currently open book. Falls back to **Dark** if no book is open. |
 | **Cover + Custom** | The cover of the currently open book. Falls back to **Custom** behavior if no book is open. |
-| **Reading Dashboard** | A reading summary with daily goal, streak, totals, achievements, and recent-book progress. |
+| **Reading Dashboard** | A reading summary with daily goal, streak, totals, and recent-book progress. |
 | **Cover + Stats v1** | The current book cover with compact book/global reading stats. Falls back to **Reading Dashboard** if no cover can be rendered. |
 | **Cover + Stats v2** | The current book cover with a compact global stats footer. Falls back to **Reading Dashboard** if no cover can be rendered. |
 | **Custom + Stats v1** | A custom sleep image with the same compact book/global stats overlay as **Cover + Stats v1**. Falls back to **Reading Dashboard** if no custom image is found. |

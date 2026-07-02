@@ -13,7 +13,6 @@
 #include <cstdio>
 #include <ctime>
 
-#include "AchievementsStore.h"
 #include "ButtonRemapActivity.h"
 #include "ClearCacheActivity.h"
 #include "CrossPointSettings.h"
@@ -34,13 +33,10 @@
 #include "ShortcutVisibilityActivity.h"
 #include "StatusBarSettingsActivity.h"
 #include "TimeZoneSelectActivity.h"
-#include "activities/apps/AchievementsActivity.h"
 #include "activities/apps/BookmarksAppActivity.h"
 #include "activities/apps/FavoritesAppActivity.h"
-#include "activities/apps/FlashcardsAppActivity.h"
 #include "activities/apps/IfFoundActivity.h"
 #include "activities/apps/ReadingHeatmapActivity.h"
-#include "activities/apps/ReadingProfileActivity.h"
 #include "activities/apps/ReadingStatsActivity.h"
 #include "activities/apps/ScreenCleanActivity.h"
 #include "activities/apps/SleepAppActivity.h"
@@ -213,25 +209,12 @@ const std::vector<SettingInfo>& getDeviceOnlyAppSettings() {
       SettingInfo::Action(StrId::STR_EXPORT_READING_STATS, SettingAction::ExportReadingStats),
       SettingInfo::Action(StrId::STR_IMPORT_READING_STATS, SettingAction::ImportReadingStats),
       SettingInfo::Action(StrId::STR_READING_HEATMAP, SettingAction::ReadingHeatmap),
-      SettingInfo::Action(StrId::STR_READING_PROFILE, SettingAction::ReadingProfile),
-      SettingInfo::Section(StrId::STR_ACHIEVEMENTS),
-      SettingInfo::Action(StrId::STR_ACHIEVEMENTS, SettingAction::Achievements),
-      SettingInfo::Toggle(StrId::STR_ENABLE_ACHIEVEMENTS, &CrossPointSettings::achievementsEnabled),
-      SettingInfo::Toggle(StrId::STR_ACHIEVEMENT_POPUPS, &CrossPointSettings::achievementPopups),
-      SettingInfo::Action(StrId::STR_RESET_ACHIEVEMENTS, SettingAction::ResetAchievements),
-      SettingInfo::Action(StrId::STR_SYNC_WITH_PREV_STATS, SettingAction::SyncAchievementsFromStats),
       SettingInfo::Section(StrId::STR_APPS),
       SettingInfo::Action(StrId::STR_BOOKMARKS, SettingAction::Bookmarks),
       SettingInfo::Action(StrId::STR_FAVORITES, SettingAction::Favorites),
       SettingInfo::Action(StrId::STR_SCREEN_CLEAN, SettingAction::ScreenClean),
       SettingInfo::Action(StrId::STR_SLEEP, SettingAction::SleepApp),
       SettingInfo::Action(StrId::STR_IF_FOUND_RETURN_ME, SettingAction::IfFound),
-      SettingInfo::Section(StrId::STR_FLASHCARDS),
-      SettingInfo::Action(StrId::STR_FLASHCARDS, SettingAction::Flashcards),
-      SettingInfo::Enum(StrId::STR_STUDY_MODE, &CrossPointSettings::flashcardStudyMode,
-                        {StrId::STR_DUE, StrId::STR_SCHEDULED, StrId::STR_RANDOM_PRACTICE, StrId::STR_SEQUENTIAL}),
-      SettingInfo::Enum(StrId::STR_SESSION_SIZE, &CrossPointSettings::flashcardSessionSize,
-                        {StrId::STR_NUM_10, StrId::STR_NUM_20, StrId::STR_NUM_30, StrId::STR_NUM_50, StrId::STR_ALL}),
       SettingInfo::Section(StrId::STR_SHORTCUTS_SECTION),
       SettingInfo::Action(StrId::STR_SHORTCUT_LOCATION, SettingAction::ShortcutLocation),
       SettingInfo::Action(StrId::STR_SHORTCUT_VISIBILITY, SettingAction::ShortcutVisibility),
@@ -363,14 +346,6 @@ std::string getSettingValueText(const SettingInfo& setting) {
         return I18N.getLanguageName(I18N.getLanguage());
       case SettingAction::ReadingStats: {
         const auto* definition = findShortcutDefinition(ShortcutId::ReadingStats);
-        return definition ? ShortcutUiMetadata::getSubtitle(*definition) : "";
-      }
-      case SettingAction::Achievements: {
-        const auto* definition = findShortcutDefinition(ShortcutId::Achievements);
-        return definition ? ShortcutUiMetadata::getSubtitle(*definition) : "";
-      }
-      case SettingAction::Flashcards: {
-        const auto* definition = findShortcutDefinition(ShortcutId::Flashcards);
         return definition ? ShortcutUiMetadata::getSubtitle(*definition) : "";
       }
       case SettingAction::ScreenClean: {
@@ -718,9 +693,6 @@ void SettingsActivity::toggleCurrentSetting() {
                                    } else {
                                      showTransientPopup(tr(STR_IMPORTING), 20, 120);
                                      const bool imported = READING_STATS.importFromFile(path->path);
-                                     if (imported) {
-                                       ACHIEVEMENTS.rebuildProgressFromCurrentStats();
-                                     }
                                      showTransientPopup(imported ? tr(STR_IMPORT_DONE) : tr(STR_IMPORT_FAILED),
                                                         imported ? 100 : -1, imported ? 350 : 700);
                                    }
@@ -745,12 +717,6 @@ void SettingsActivity::toggleCurrentSetting() {
       case SettingAction::ReadingHeatmap:
         startActivityForResult(std::make_unique<ReadingHeatmapActivity>(renderer, mappedInput), resultHandler);
         break;
-      case SettingAction::ReadingProfile:
-        startActivityForResult(std::make_unique<ReadingProfileActivity>(renderer, mappedInput), resultHandler);
-        break;
-      case SettingAction::Achievements:
-        startActivityForResult(std::make_unique<AchievementsActivity>(renderer, mappedInput), resultHandler);
-        break;
       case SettingAction::ShortcutLocation:
         startActivityForResult(std::make_unique<ShortcutLocationActivity>(renderer, mappedInput), resultHandler);
         break;
@@ -765,30 +731,11 @@ void SettingsActivity::toggleCurrentSetting() {
         startActivityForResult(std::make_unique<ShortcutOrderActivity>(renderer, mappedInput, ShortcutOrderGroup::Apps),
                                resultHandler);
         break;
-      case SettingAction::ResetAchievements:
-        startActivityForResult(
-            std::make_unique<ConfirmationActivity>(renderer, mappedInput, tr(STR_RESET_ACHIEVEMENTS_CONFIRM), ""),
-            [this](const ActivityResult& result) {
-              if (!result.isCancelled) {
-                ACHIEVEMENTS.reset();
-              }
-              requestUpdate(true);
-            });
-        break;
-      case SettingAction::SyncAchievementsFromStats:
-        showTransientPopup(tr(STR_SYNC_WITH_PREV_STATS), 20, 120);
-        ACHIEVEMENTS.syncWithPreviousStats();
-        showTransientPopup(tr(STR_DONE), 100, 350);
-        requestUpdate(true);
-        break;
       case SettingAction::Bookmarks:
         startActivityForResult(std::make_unique<BookmarksAppActivity>(renderer, mappedInput), resultHandler);
         break;
       case SettingAction::Favorites:
         startActivityForResult(std::make_unique<FavoritesAppActivity>(renderer, mappedInput), resultHandler);
-        break;
-      case SettingAction::Flashcards:
-        startActivityForResult(std::make_unique<FlashcardsAppActivity>(renderer, mappedInput), resultHandler);
         break;
       case SettingAction::ScreenClean:
         startActivityForResult(std::make_unique<ScreenCleanActivity>(renderer, mappedInput), resultHandler);
@@ -808,10 +755,6 @@ void SettingsActivity::toggleCurrentSetting() {
     return;
   } else {
     return;
-  }
-
-  if (setting.valuePtr == &CrossPointSettings::dailyGoalTarget) {
-    ACHIEVEMENTS.syncWithPreviousStats();
   }
 
   if (setting.valuePtr == &CrossPointSettings::fontSize) {

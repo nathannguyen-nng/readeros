@@ -175,10 +175,6 @@
         <span class="value" id="books-progress"></span>
       </div>
       <div class="info-row">
-        <span class="label">Achievements</span>
-        <span class="value" id="achievements-progress"></span>
-      </div>
-      <div class="info-row">
         <span class="label">Recents</span>
         <span class="value" id="recent-count"></span>
       </div>
@@ -252,8 +248,6 @@
           `${Number.isFinite(data.streakDays) ? data.streakDays : 0} day${data.streakDays === 1 ? '' : 's'}`;
         document.getElementById('books-progress').textContent =
           `${Number.isFinite(data.booksCompleted) ? data.booksCompleted : 0} completed / ${Number.isFinite(data.booksStarted) ? data.booksStarted : 0} started`;
-        document.getElementById('achievements-progress').textContent =
-          `${Number.isFinite(data.achievementsUnlocked) ? data.achievementsUnlocked : 0} / ${Number.isFinite(data.achievementsTotal) ? data.achievementsTotal : 0} unlocked`;
         document.getElementById('recent-count').textContent =
           `${Number.isFinite(data.recentCount) ? data.recentCount : 0} books`;
       } catch (error) {

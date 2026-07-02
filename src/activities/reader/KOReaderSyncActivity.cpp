@@ -9,7 +9,6 @@
 #include <esp_heap_caps.h>
 #include <esp_system.h>
 
-#include "AchievementsStore.h"
 #include "CrossPointSettings.h"
 #include "KOReaderCredentialStore.h"
 #include "KOReaderDocumentId.h"
@@ -20,7 +19,6 @@
 #include "activities/network/WifiSelectionActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
-#include "util/AchievementPopupUtils.h"
 #include "util/CompletedBookMover.h"
 #include "util/TimeUtils.h"
 
@@ -513,8 +511,6 @@ void KOReaderSyncActivity::returnAfterAutoPush() {
   if (moveResult.moved) {
     finalBookPath = moveResult.destinationPath;
   }
-
-  showPendingAchievementPopups(renderer);
 
   const auto snapshot = READING_STATS.getLastSessionSnapshot();
   const bool countedSession =

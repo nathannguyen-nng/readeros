@@ -15,13 +15,10 @@ enum class ShortcutId {
   Settings,
   ReadingStats,
   ReadingHeatmap,
-  ReadingProfile,
-  Achievements,
   IfFound,
   RecentBooks,
   Bookmarks,
   Favorites,
-  Flashcards,
   Dictionary,
   FileTransfer,
   ScreenClean,
@@ -39,8 +36,8 @@ struct ShortcutDefinition {
   uint8_t CrossPointSettings::* visiblePtr;
 };
 
-inline const std::array<ShortcutDefinition, 17>& getShortcutDefinitions() {
-  static const std::array<ShortcutDefinition, 17> definitions = {
+inline const std::array<ShortcutDefinition, 14>& getShortcutDefinitions() {
+  static const std::array<ShortcutDefinition, 14> definitions = {
       ShortcutDefinition{ShortcutId::BrowseFiles, StrId::STR_BROWSE_FILES, StrId::STR_NONE_OPT, UIIcon::Folder,
                          &CrossPointSettings::browseFilesShortcut, &CrossPointSettings::browseFilesShortcutOrder,
                          &CrossPointSettings::browseFilesShortcutVisible},
@@ -57,13 +54,6 @@ inline const std::array<ShortcutDefinition, 17>& getShortcutDefinitions() {
                          UIIcon::Library, &CrossPointSettings::readingHeatmapShortcut,
                          &CrossPointSettings::readingHeatmapShortcutOrder,
                          &CrossPointSettings::readingHeatmapShortcutVisible},
-      ShortcutDefinition{ShortcutId::ReadingProfile, StrId::STR_READING_PROFILE, StrId::STR_READING_PROFILE_DESC,
-                         UIIcon::Library, &CrossPointSettings::readingProfileShortcut,
-                         &CrossPointSettings::readingProfileShortcutOrder,
-                         &CrossPointSettings::readingProfileShortcutVisible},
-      ShortcutDefinition{ShortcutId::Achievements, StrId::STR_ACHIEVEMENTS, StrId::STR_ACHIEVEMENTS_APP_DESC,
-                         UIIcon::Trophy, &CrossPointSettings::achievementsShortcut,
-                         &CrossPointSettings::achievementsShortcutOrder, &CrossPointSettings::achievementsShortcutVisible},
       ShortcutDefinition{ShortcutId::IfFound, StrId::STR_IF_FOUND_RETURN_ME, StrId::STR_IF_FOUND_APP_DESC, UIIcon::File,
                          &CrossPointSettings::ifFoundShortcut, &CrossPointSettings::ifFoundShortcutOrder,
                          &CrossPointSettings::ifFoundShortcutVisible},
@@ -76,9 +66,6 @@ inline const std::array<ShortcutDefinition, 17>& getShortcutDefinitions() {
       ShortcutDefinition{ShortcutId::Favorites, StrId::STR_FAVORITES, StrId::STR_FAVORITES_APP_DESC, UIIcon::Heart,
                          &CrossPointSettings::favoritesShortcut, &CrossPointSettings::favoritesShortcutOrder,
                          &CrossPointSettings::favoritesShortcutVisible},
-      ShortcutDefinition{ShortcutId::Flashcards, StrId::STR_FLASHCARDS, StrId::STR_FLASHCARDS_APP_DESC, UIIcon::Text,
-                         &CrossPointSettings::flashcardsShortcut, &CrossPointSettings::flashcardsShortcutOrder,
-                         &CrossPointSettings::flashcardsShortcutVisible},
       ShortcutDefinition{ShortcutId::Dictionary, StrId::STR_DICTIONARY, StrId::STR_DICTIONARY_APP_DESC, UIIcon::Text,
                          &CrossPointSettings::dictionaryShortcut, &CrossPointSettings::dictionaryShortcutOrder,
                          &CrossPointSettings::dictionaryShortcutVisible},

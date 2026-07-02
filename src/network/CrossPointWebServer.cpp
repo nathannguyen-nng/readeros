@@ -13,7 +13,6 @@
 #include <cstdio>
 #include <cstring>
 
-#include "AchievementsStore.h"
 #include "CrossPointSettings.h"
 #include "FontInstaller.h"
 #include "KOReaderCredentialStore.h"
@@ -51,16 +50,6 @@ bool isCompletedReadingFilePath(const String& filePath) {
 
   const auto* statsBook = READING_STATS.findBook(std::string{filePath.c_str(), filePath.length()});
   return statsBook != nullptr && statsBook->completed;
-}
-
-uint32_t getUnlockedAchievementCount() {
-  uint32_t unlocked = 0;
-  for (const auto& achievement : ACHIEVEMENTS.buildViews()) {
-    if (achievement.state.unlocked) {
-      ++unlocked;
-    }
-  }
-  return unlocked;
 }
 
 // Static pointer for WebSocket callback (WebSocketsServer requires C-style callback)
@@ -275,10 +264,6 @@ constexpr StrId OPT_DATE_FORMAT[] = {StrId::STR_DATE_FORMAT_DD_MM_YYYY, StrId::S
 constexpr StrId OPT_DAILY_GOAL[] = {StrId::STR_MIN_15, StrId::STR_MIN_30, StrId::STR_MIN_45, StrId::STR_MIN_60};
 constexpr StrId OPT_STATS_AUTOBACKUP[] = {StrId::STR_STATE_OFF, StrId::STR_NUM_1, StrId::STR_NUM_7, StrId::STR_NUM_14,
                                           StrId::STR_NUM_21};
-constexpr StrId OPT_STUDY_MODE[] = {StrId::STR_DUE, StrId::STR_SCHEDULED, StrId::STR_RANDOM_PRACTICE,
-                                    StrId::STR_SEQUENTIAL};
-constexpr StrId OPT_SESSION_SIZE[] = {StrId::STR_NUM_10, StrId::STR_NUM_20, StrId::STR_NUM_30, StrId::STR_NUM_50,
-                                      StrId::STR_ALL};
 constexpr StrId OPT_HOME_BOOK_SOURCE[] = {StrId::STR_RECENTS, StrId::STR_FAVORITES};
 constexpr StrId OPT_SHORTCUT_LOCATION[] = {StrId::STR_HOME_LOCATION, StrId::STR_APPS};
 constexpr StrId OPT_KO_MATCH[] = {StrId::STR_FILENAME, StrId::STR_BINARY};
@@ -377,12 +362,8 @@ constexpr WebSettingDef WEB_SETTINGS[] = {
     WEB_ENUM(StrId::STR_DAILY_GOAL, dailyGoalTarget, OPT_DAILY_GOAL, "dailyGoalTarget", StrId::STR_APPS),
     WEB_ENUM(StrId::STR_READING_STATS_AUTOBACKUP, readingStatsAutoBackup, OPT_STATS_AUTOBACKUP,
              "readingStatsAutoBackup", StrId::STR_APPS),
-    WEB_ENUM(StrId::STR_STUDY_MODE, flashcardStudyMode, OPT_STUDY_MODE, "flashcardStudyMode", StrId::STR_APPS),
-    WEB_ENUM(StrId::STR_SESSION_SIZE, flashcardSessionSize, OPT_SESSION_SIZE, "flashcardSessionSize", StrId::STR_APPS),
     WEB_TOGGLE(StrId::STR_SHOW_AFTER_READING, showStatsAfterReading, "showStatsAfterReading", StrId::STR_APPS),
     WEB_TOGGLE(StrId::STR_MOVE_COMPLETED_BOOKS, moveCompletedBooks, "moveCompletedBooks", StrId::STR_APPS),
-    WEB_TOGGLE(StrId::STR_ENABLE_ACHIEVEMENTS, achievementsEnabled, "achievementsEnabled", StrId::STR_APPS),
-    WEB_TOGGLE(StrId::STR_ACHIEVEMENT_POPUPS, achievementPopups, "achievementPopups", StrId::STR_APPS),
 
     WEB_ENUM(StrId::STR_BROWSE_FILES, browseFilesShortcut, OPT_SHORTCUT_LOCATION, "browseFilesShortcut",
              StrId::STR_SHORTCUTS_SECTION),
@@ -394,10 +375,6 @@ constexpr WebSettingDef WEB_SETTINGS[] = {
              StrId::STR_SHORTCUTS_SECTION),
     WEB_ENUM(StrId::STR_READING_HEATMAP, readingHeatmapShortcut, OPT_SHORTCUT_LOCATION, "readingHeatmapShortcut",
              StrId::STR_SHORTCUTS_SECTION),
-    WEB_ENUM(StrId::STR_READING_PROFILE, readingProfileShortcut, OPT_SHORTCUT_LOCATION, "readingProfileShortcut",
-             StrId::STR_SHORTCUTS_SECTION),
-    WEB_ENUM(StrId::STR_ACHIEVEMENTS, achievementsShortcut, OPT_SHORTCUT_LOCATION, "achievementsShortcut",
-             StrId::STR_SHORTCUTS_SECTION),
     WEB_ENUM(StrId::STR_IF_FOUND_RETURN_ME, ifFoundShortcut, OPT_SHORTCUT_LOCATION, "ifFoundShortcut",
              StrId::STR_SHORTCUTS_SECTION),
     WEB_ENUM(StrId::STR_MENU_RECENT_BOOKS, recentBooksShortcut, OPT_SHORTCUT_LOCATION, "recentBooksShortcut",
@@ -405,8 +382,6 @@ constexpr WebSettingDef WEB_SETTINGS[] = {
     WEB_ENUM(StrId::STR_BOOKMARKS, bookmarksShortcut, OPT_SHORTCUT_LOCATION, "bookmarksShortcut",
              StrId::STR_SHORTCUTS_SECTION),
     WEB_ENUM(StrId::STR_FAVORITES, favoritesShortcut, OPT_SHORTCUT_LOCATION, "favoritesShortcut",
-             StrId::STR_SHORTCUTS_SECTION),
-    WEB_ENUM(StrId::STR_FLASHCARDS, flashcardsShortcut, OPT_SHORTCUT_LOCATION, "flashcardsShortcut",
              StrId::STR_SHORTCUTS_SECTION),
     WEB_ENUM(StrId::STR_FILE_TRANSFER, fileTransferShortcut, OPT_SHORTCUT_LOCATION, "fileTransferShortcut",
              StrId::STR_SHORTCUTS_SECTION),
@@ -740,8 +715,6 @@ void CrossPointWebServer::handleNotFound() const {
 void CrossPointWebServer::handleStatus() const {
   // Get correct IP based on AP vs STA mode
   const String ipAddr = apMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
-  const uint32_t unlockedAchievements = getUnlockedAchievementCount();
-  const uint32_t totalAchievements = static_cast<uint32_t>(AchievementId::_COUNT);
 
   JsonDocument doc;
   doc["version"] = CROSSPOINT_VERSION;
@@ -756,8 +729,6 @@ void CrossPointWebServer::handleStatus() const {
   doc["todayReadingMs"] = READING_STATS.getTodayReadingMs();
   doc["dailyGoalMs"] = getDailyReadingGoalMs();
   doc["streakDays"] = READING_STATS.getCurrentStreakDays();
-  doc["achievementsUnlocked"] = unlockedAchievements;
-  doc["achievementsTotal"] = totalAchievements;
 
   String json;
   serializeJson(doc, json);

@@ -13,7 +13,6 @@
 
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
-#include "AchievementsStore.h"
 #include "MappedInputManager.h"
 #include "ReadingStatsStore.h"
 #include "ReaderUtils.h"
@@ -22,7 +21,6 @@
 #include "activities/apps/ReadingStatsDetailActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
-#include "util/AchievementPopupUtils.h"
 #include "util/BookIdentity.h"
 #include "util/CompletedBookMover.h"
 
@@ -42,8 +40,6 @@ std::string getLegacyProgressPath(Txt& txt) { return txt.getCachePath() + "/prog
 
 void exitReaderToHomeOrStats(GfxRenderer& renderer, MappedInputManager& mappedInput, const std::string& bookPath) {
   READING_STATS.endSession();
-  ACHIEVEMENTS.recordSessionEnded(READING_STATS.getLastSessionSnapshot());
-  showPendingAchievementPopups(renderer);
   const bool countedSession =
       READING_STATS.getLastSessionSnapshot().valid && READING_STATS.getLastSessionSnapshot().counted &&
       READING_STATS.getLastSessionSnapshot().path == bookPath;
@@ -326,7 +322,6 @@ void TxtReaderActivity::onExit() {
   APP_STATE.readerActivityLoadCount = 0;
   APP_STATE.saveToFile();
   READING_STATS.endSession();
-  ACHIEVEMENTS.recordSessionEnded(READING_STATS.getLastSessionSnapshot());
   txt.reset();
 }
 
@@ -354,8 +349,6 @@ void TxtReaderActivity::loop() {
   if (mappedInput.isPressed(MappedInputManager::Button::Back) && mappedInput.getHeldTime() >= ReaderUtils::GO_HOME_MS) {
     const std::string fileBrowserPath = moveCompletedBookIfEnabled();
     READING_STATS.endSession();
-    ACHIEVEMENTS.recordSessionEnded(READING_STATS.getLastSessionSnapshot());
-    showPendingAchievementPopups(renderer);
     activityManager.goToFileBrowser(fileBrowserPath);
     return;
   }

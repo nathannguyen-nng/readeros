@@ -201,21 +201,6 @@ class CrossPointSettings {
     READING_STATS_AUTOBACKUP_21_DAYS = 4,
     READING_STATS_AUTOBACKUP_COUNT
   };
-  enum FLASHCARD_STUDY_MODE {
-    FLASHCARD_STUDY_DUE = 0,
-    FLASHCARD_STUDY_SCHEDULED = 1,
-    FLASHCARD_STUDY_INFINITE = 2,
-    FLASHCARD_STUDY_SEQUENTIAL = 3,
-    FLASHCARD_STUDY_MODE_COUNT
-  };
-  enum FLASHCARD_SESSION_SIZE {
-    FLASHCARD_SESSION_10 = 0,
-    FLASHCARD_SESSION_20 = 1,
-    FLASHCARD_SESSION_30 = 2,
-    FLASHCARD_SESSION_50 = 3,
-    FLASHCARD_SESSION_ALL = 4,
-    FLASHCARD_SESSION_SIZE_COUNT
-  };
   enum SYNC_DAY_REMINDER_STARTS {
     SYNC_DAY_REMINDER_OFF = 0,
     SYNC_DAY_REMINDER_10 = 1,
@@ -322,12 +307,8 @@ class CrossPointSettings {
   uint8_t dateFormat = DATE_DD_MM_YYYY;
   uint8_t dailyGoalTarget = DAILY_GOAL_30_MIN;
   uint8_t readingStatsAutoBackup = READING_STATS_AUTOBACKUP_7_DAYS;
-  uint8_t flashcardStudyMode = FLASHCARD_STUDY_DUE;
-  uint8_t flashcardSessionSize = FLASHCARD_SESSION_ALL;
   uint8_t showStatsAfterReading = 1;
   uint8_t moveCompletedBooks = 0;
-  uint8_t achievementsEnabled = 1;
-  uint8_t achievementPopups = 1;
   uint8_t appsHubShortcutOrder = 1;
   uint8_t browseFilesShortcut = SHORTCUT_HOME;
   uint8_t browseFilesShortcutOrder = 0;
@@ -342,10 +323,6 @@ class CrossPointSettings {
   uint8_t readingStatsShortcutOrder = 5;
   uint8_t readingHeatmapShortcut = SHORTCUT_APPS;
   uint8_t readingHeatmapShortcutOrder = 6;
-  uint8_t readingProfileShortcut = SHORTCUT_APPS;
-  uint8_t readingProfileShortcutOrder = 7;
-  uint8_t achievementsShortcut = SHORTCUT_APPS;
-  uint8_t achievementsShortcutOrder = 8;
   uint8_t ifFoundShortcut = SHORTCUT_APPS;
   uint8_t ifFoundShortcutOrder = 9;
   uint8_t readMeShortcut = SHORTCUT_APPS;
@@ -356,8 +333,6 @@ class CrossPointSettings {
   uint8_t bookmarksShortcutOrder = 12;
   uint8_t favoritesShortcut = SHORTCUT_APPS;
   uint8_t favoritesShortcutOrder = 13;
-  uint8_t flashcardsShortcut = SHORTCUT_APPS;
-  uint8_t flashcardsShortcutOrder = 14;
   uint8_t dictionaryShortcut = SHORTCUT_APPS;
   uint8_t dictionaryShortcutOrder = 15;
   uint8_t fileTransferShortcut = SHORTCUT_APPS;
@@ -375,14 +350,11 @@ class CrossPointSettings {
   uint8_t settingsShortcutVisible = 1;
   uint8_t readingStatsShortcutVisible = 1;
   uint8_t readingHeatmapShortcutVisible = 1;
-  uint8_t readingProfileShortcutVisible = 1;
-  uint8_t achievementsShortcutVisible = 1;
   uint8_t ifFoundShortcutVisible = 1;
   uint8_t readMeShortcutVisible = 1;
   uint8_t recentBooksShortcutVisible = 1;
   uint8_t bookmarksShortcutVisible = 1;
   uint8_t favoritesShortcutVisible = 1;
-  uint8_t flashcardsShortcutVisible = 1;
   uint8_t dictionaryShortcutVisible = 1;
   uint8_t fileTransferShortcutVisible = 1;
   uint8_t screenCleanShortcutVisible = 1;

@@ -2,7 +2,7 @@
 >
 > Instead of only tracking progress, this fork focuses on the full reading journey — consistency, habits, milestones, statistics, customization, and personal reading identity.
 >
-> The project adds optional layers such as reading streaks, detailed analytics, achievements, heatmaps, Sync Day tracking, session history, and deeper personalization, while still allowing the interface to remain clean and distraction-free if preferred.
+> The project adds optional layers such as reading streaks, detailed analytics, heatmaps, Sync Day tracking, session history, and deeper personalization, while still allowing the interface to remain clean and distraction-free if preferred.
 
 # CPR-vCodex
 
@@ -26,11 +26,10 @@ Unlike a complete rewrite, CPR-vCodex intentionally stays close to the upstream 
 
 Some of the main additions include:
 
-- full reading analytics: reading stats, heatmaps, day detail, reading profile, session history, goals, streaks, and achievements
+- full reading analytics: reading stats, heatmaps, day detail, session history, and goals and streaks
 - Sync Day support for reliable offline day-based statistics on hardware without a trustworthy sleep RTC
 - per-book statistics tools, including reading-time correction, start-date editing, and per-book stats reset
 - StarDict dictionary support from the SD card, with selectable monolingual and translation dictionaries, per-language folders, reader word lookup, suggestions, and lookup history
-- offline Flashcards with CSV decks, multiple study modes, recents, stats, and session summaries
 - EPUB bookmarks with explicit reader-menu actions plus a global bookmarks app
 - customizable Home and Apps shortcuts, reader quick settings, reading layouts, themes, and Lyra Carousel workflow improvements
 - enhanced sleep tools, including custom image directories, cover/custom stats screens, sleep previews, cached sleep frames, and configurable clean sleep refresh
@@ -155,34 +154,6 @@ SD:/
       ChareInk_18.cpfont
 ```
 
-## Flashcards study modes
-
-`Flashcards` currently offers four review modes:
-
-- `Due`: builds a finite session from cards that are due first, then fills with unseen cards if needed. `Session size` is respected here, and `All` means "all due cards plus unseen cards".
-- `Scheduled`: builds a finite shuffled session from the whole deck. `Session size` is respected here, and `All` means the whole deck.
-- `Infinite`: ignores `Session size`, keeps drawing cards from the whole deck, and never finishes on its own. Exit manually when you want the session summary.
-- `Sequential`: uses every card in CSV order, ignores `Session size`, and finishes after the last card.
-
-Why it is split this way:
-
-- `Study mode` decides **which cards** enter the session
-- `Session size` decides **how many** of those cards are included
-
-`Fail` and `Next` send the current card back through the session flow. In `Infinite`, the queue is rebuilt again when a full pass is consumed, so practice can continue indefinitely. In `Sequential`, the deck is kept in file order.
-
-Example CSV deck structure:
-
-```csv
-front,back
-"What is the capital of France?","Paris"
-"Who wrote Don Quixote?","Miguel de Cervantes"
-"What is 12 x 12?","144"
-```
-
-Sample deck ready to copy to the SD card:
-- [flashcards_sample.csv](./flashcards_sample.csv)
-
 `CPR-vCodex` is a reading-focused firmware fork for the **Xteink X4**, built on top of the stable **CrossPoint Reader** baseline and extended with analytics, reader utilities, branding cleanup, extra UI features, and carefully selected upstream carry-forwards.
 
 The official `crosspoint-reader` project is treated as the stable reference. `vcodex` only carries forward upstream work when it is useful on the X4 and safe enough to keep the reader fast and reliable.
@@ -194,9 +165,8 @@ This project is **not affiliated with Xteink**.
 ## Highlights
 
 - stable upstream-based reader baseline kept fast on large EPUBs
-- richer on-device analytics: `Reading Stats`, `Reading Heatmap`, `Reading Day`, `Reading Profile`
+- richer on-device analytics: `Reading Stats`, `Reading Heatmap`, `Reading Day`
 - manual per-book reading-time/date corrections for missed or accidental stats
-- `Achievements` built on top of the same reading data model
 - `Sync Day` for coherent day-based stats on hardware without a trustworthy sleep RTC
 - `Lyra Carousel` Home theme, originally created by [zgredex](https://github.com/zgredex), adapted to this fork by [erickosanchezj](https://github.com/erickosanchezj), limited to 3 books for smoother X4 navigation, with a sliding bottom shortcut row so every configured Home action remains reachable
 - experimental X3-only `Tilt Page Turn`, hidden unless the QMI8658 IMU is detected and disabled by default
@@ -208,7 +178,6 @@ This project is **not affiliated with Xteink**.
 - KOReader Sync compatibility improvements, including Calibre-Web-Automated `/kosync` support
 - configurable OPDS download filename format: `Author - Title` or `Title - Author`
 - configurable `Home` and `Apps` shortcuts
-- `Flashcards` with offline CSV decks, session summary, recents, stats and settings
 - `Text Darkness`, `Bionic Reading`, `Reader Refresh Mode`, `Lexend`, `X Small`
 - `Sleep` tools with directory selection, preview, cache, sequential and shuffle behavior
 - `Dark Mode (Experimental)`
@@ -279,9 +248,6 @@ That is enough to start using the core `vcodex` additions: coherent day-based an
 | `Manual stats correction` | add or subtract per-book minutes for a selected date without typing on the device | [Reading analytics suite](#reading-analytics-suite) |
 | `Reading Heatmap` | monthly calendar of reading intensity | [Reading analytics suite](#reading-analytics-suite) |
 | `Reading Day` | one-day drill-down from the heatmap | [Reading analytics suite](#reading-analytics-suite) |
-| `Reading Profile` | weekly reading behavior summary | [Reading analytics suite](#reading-analytics-suite) |
-| `Achievements` | console-style milestones and optional popups | [Achievements](#achievements) |
-| `Flashcards` | offline deck study with `Scheduled` and `Infinite` session modes | [Flashcards](#flashcards) |
 | `Sync Day` | manual Wi-Fi date sync and fallback-day logic | [Sync Day and date model](#sync-day-and-date-model) |
 | `Home + Apps shortcuts` | configurable placement, visibility, ordering, and a fallback to `Lyra vCodex` for removed/unknown themes | [Home and Apps](#home-and-apps) |
 | `SD card fonts` | download, upload, or manually install extra `.cpfont` families from the SD card | [Settings](#settings) |
@@ -347,7 +313,6 @@ That means these views stay coherent with each other:
 - `Reading Stats`
 - `Reading Heatmap`
 - `Reading Day`
-- `Reading Profile`
 - per-book stats detail
 
 ### What gets tracked
@@ -376,7 +341,6 @@ That means these views stay coherent with each other:
 | `More Details` | wider trends and graphs |
 | `Reading Heatmap` | monthly calendar of reading intensity |
 | `Reading Day` | one-day detail view opened from the heatmap |
-| `Reading Profile` | summary of recent reading behavior |
 | `Per-book stats detail` | cover, progress, sessions, time and last-read info for one book |
 
 Per-book detail also includes a small settings button under the cover. It opens book-specific stats actions:
@@ -392,30 +356,7 @@ The correction screen can:
 - choose 15, 30, 45, or 60 minutes
 - subtracting is capped so a day can never go below zero
 
-Manual corrections update the same daily totals used by streaks, heatmaps and achievements.
-
-## Achievements
-
-`Achievements` adds a lightweight progression layer on top of the same reading data used by stats.
-
-It provides:
-
-- a dedicated `Apps > Achievements` screen
-- pending vs completed sections
-- unlock popups
-- reset support
-- retroactive sync from existing reading stats
-
-The current catalog rewards, among other things:
-
-- started books
-- counted sessions
-- finished books
-- total reading time
-- goal-completion days
-- streaks
-- bookmark usage
-- long sessions
+Manual corrections update the same daily totals used by streaks and heatmaps.
 
 ## ReadMe
 
@@ -426,10 +367,8 @@ It includes compact help pages for:
 - `Sync Day`
 - `Reading Stats`
 - `Bookmarks`
-- `Flashcards`
 - `Sleep`
 - `Customize Home and Apps`
-- `Achievements`
 - `If found, please return me`
 
 This gives device-side help without needing to reopen GitHub every time.
@@ -461,37 +400,6 @@ Supported flow:
 - reopen a book directly at a saved bookmark from the global bookmarks app
 - delete individual bookmarks or all bookmarks for one book
 
-## Flashcards
-
-`Flashcards` is an offline study app built around CSV decks on the SD card.
-
-Main sections:
-
-- `Open`
-- `Recents`
-- `Statistics`
-- `Settings`
-
-Deck flow:
-
-- open a CSV deck from the SD card
-- study in landscape using `Flip`, `Next`, `Success` and `Fail`
-- leave the deck through the page buttons when you want to finish
-- get a session summary when you exit
-
-Study modes:
-
-- `Due`: finite review-oriented session, using due cards first and unseen cards second
-- `Scheduled`: finite shuffled session from the whole deck
-- `Infinite`: endless practice, ignores `Session size`
-- `Sequential`: whole deck in CSV order, ignores `Session size`
-
-Statistics:
-
-- each deck keeps its own seen / unseen / due / mastered metrics
-- `Statistics` lists known decks
-- holding `Select` on a deck inside `Statistics` lets you reset that deck's flashcard stats after confirmation
-
 ## Sleep
 
 The `Sleep` app makes custom sleep images easier to manage.
@@ -504,7 +412,7 @@ It supports:
 - persistent selected directory
 - cached sleep framebuffers
 - reduced repetition through recent-wallpaper tracking
-- `Reading Dashboard` sleep mode with daily goal, streak, reading totals, and achievement progress
+- `Reading Dashboard` sleep mode with daily goal, streak, and reading totals
 - `Cover + Stats` and `Custom + Stats` sleep modes with compact reading overlays on either the current cover or configured custom images
 
 ## Settings
@@ -522,7 +430,6 @@ Useful reader/display additions include:
 | System | `SD Card Firmware Update`, OTA update check, cache clearing, language, OPDS servers |
 | Date | `Display Day`, `Date Format`, `Time Zone`, `Sync Day` reminder behavior |
 | Reading stats | `Daily Goal`, `Show after reading`, `Reset Reading Stats`, `Export Reading Stats`, `Import Reading Stats` |
-| Achievements | `Enable achievements`, `Achievement popups`, `Reset achievements`, `Sync with prev. stats` |
 | Navigation | `Location Home and Apps`, `Visibility Home and Apps`, `Order Home shortcuts`, `Order Apps shortcuts` |
 
 `Text Darkness` is a feature idea seen in the `crosspet` fork and adapted here for `vcodex`.
@@ -563,7 +470,6 @@ Important artifacts include:
 
 - `/.crosspoint/state.json`
 - `/.crosspoint/reading_stats.json`
-- `/.crosspoint/achievements.json`
 - `/.crosspoint/recent.json`
 - per-book `bookmarks.bin`
 - `/exports/*.json` for reading stats export/import

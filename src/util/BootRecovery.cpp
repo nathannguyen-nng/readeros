@@ -20,8 +20,7 @@ enum RecoveryBits : uint32_t {
   SKIP_READING_STATS = 1u << 4,
   SKIP_RECENT_BOOKS = 1u << 5,
   SKIP_FAVORITES = 1u << 6,
-  SKIP_FLASHCARDS = 1u << 7,
-  SKIP_ACHIEVEMENTS = 1u << 8,
+  // Bits 7/8 formerly flashcards/achievements; reserved so stored masks keep their meaning.
   FORCE_HOME = 1u << 9,
   SKIP_OPDS = 1u << 10,
 };
@@ -52,15 +51,11 @@ uint32_t getSkipMaskForStage(const BootRecovery::BootStage stage) {
     case Stage::State:
       return SKIP_STATE | FORCE_HOME;
     case Stage::ReadingStats:
-      return SKIP_READING_STATS | SKIP_ACHIEVEMENTS | FORCE_HOME;
+      return SKIP_READING_STATS | FORCE_HOME;
     case Stage::RecentBooks:
       return SKIP_RECENT_BOOKS | FORCE_HOME;
     case Stage::Favorites:
       return SKIP_FAVORITES | FORCE_HOME;
-    case Stage::Flashcards:
-      return SKIP_FLASHCARDS | FORCE_HOME;
-    case Stage::Achievements:
-      return SKIP_ACHIEVEMENTS | FORCE_HOME;
     case Stage::RouteDecision:
       return FORCE_HOME;
     case Stage::None:
@@ -221,10 +216,6 @@ const char* getStageName(const BootStage stage) {
       return "recentBooks";
     case BootStage::Favorites:
       return "favorites";
-    case BootStage::Flashcards:
-      return "flashcards";
-    case BootStage::Achievements:
-      return "achievements";
     case BootStage::RouteDecision:
       return "routeDecision";
     case BootStage::Completed:
@@ -244,7 +235,5 @@ bool shouldSkipState() { return hasMask(SKIP_STATE); }
 bool shouldSkipReadingStats() { return hasMask(SKIP_READING_STATS); }
 bool shouldSkipRecentBooks() { return hasMask(SKIP_RECENT_BOOKS); }
 bool shouldSkipFavorites() { return hasMask(SKIP_FAVORITES); }
-bool shouldSkipFlashcards() { return hasMask(SKIP_FLASHCARDS); }
-bool shouldSkipAchievements() { return hasMask(SKIP_ACHIEVEMENTS); }
 
 }  // namespace BootRecovery

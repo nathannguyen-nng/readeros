@@ -7,7 +7,6 @@ class KOReaderCredentialStore;
 class RecentBooksStore;
 class FavoritesStore;
 class ReadingStatsStore;
-class AchievementsStore;
 class OpdsServerStore;
 
 namespace JsonSettingsIO {
@@ -40,9 +39,6 @@ bool loadFavorites(FavoritesStore& store, const char* json);
 bool saveReadingStats(const ReadingStatsStore& store, const char* path);
 bool loadReadingStats(ReadingStatsStore& store, const char* json);
 bool loadReadingStatsFromFile(ReadingStatsStore& store, const char* path);
-bool saveAchievements(const AchievementsStore& store, const char* path);
-bool loadAchievements(AchievementsStore& store, const char* json);
-bool loadAchievementsFromFile(AchievementsStore& store, const char* path);
 
 // OpdsServerStore
 bool saveOpds(const OpdsServerStore& store, const char* path);

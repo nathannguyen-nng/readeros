@@ -16,7 +16,6 @@
 #include <string>
 #include <vector>
 
-#include "AchievementsStore.h"
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
 #include "ReadingStatsStore.h"
@@ -179,101 +178,6 @@ void drawMetricPanel(const GfxRenderer& renderer, const Rect& rect, const char* 
   renderer.drawRoundedRect(rect.x, rect.y, rect.width, rect.height, 2, 7, true);
   drawTextClipped(renderer, SMALL_FONT_ID, rect.x + 13, rect.y + 15, label, rect.width - 26);
   drawTextClipped(renderer, UI_12_FONT_ID, rect.x + 13, rect.y + 39, value, rect.width - 26, true, EpdFontFamily::BOLD);
-}
-
-std::string formatAchievementProgress(const AchievementView& view) {
-  const uint64_t progress = std::min(view.progress, view.target);
-  if (view.definition == nullptr) {
-    return "";
-  }
-  switch (view.definition->metric) {
-    case AchievementMetric::TotalReadingMs:
-    case AchievementMetric::MaxSessionMs:
-      return ReadingStatsAnalytics::formatDurationHm(progress) + " / " +
-             ReadingStatsAnalytics::formatDurationHm(view.target);
-    default:
-      return std::to_string(progress) + " / " + std::to_string(view.target);
-  }
-}
-
-struct AchievementSleepLine {
-  std::string label;
-  std::string title;
-  std::string progress;
-  int percent = 0;
-};
-
-AchievementSleepLine getAchievementSleepLine() {
-  AchievementSleepLine line;
-  line.label = tr(STR_ACHIEVEMENTS);
-  if (!SETTINGS.achievementsEnabled) {
-    line.title = tr(STR_STATE_OFF);
-    return line;
-  }
-
-  const auto views = ACHIEVEMENTS.buildViews();
-  const AchievementView* latestUnlocked = nullptr;
-  const AchievementView* nextLocked = nullptr;
-
-  for (const auto& view : views) {
-    if (!view.definition) {
-      continue;
-    }
-    if (view.state.unlocked) {
-      if (latestUnlocked == nullptr || view.state.unlockedAt > latestUnlocked->state.unlockedAt) {
-        latestUnlocked = &view;
-      }
-      continue;
-    }
-    if (nextLocked == nullptr ||
-        percentOf(view.progress, view.target) > percentOf(nextLocked->progress, nextLocked->target)) {
-      nextLocked = &view;
-    }
-  }
-
-  if (nextLocked) {
-    line.label = tr(STR_NEXT_ACHIEVEMENT);
-    line.title = ACHIEVEMENTS.getTitle(nextLocked->definition->id);
-    line.progress = formatAchievementProgress(*nextLocked);
-    line.percent = percentOf(nextLocked->progress, nextLocked->target);
-  } else if (latestUnlocked) {
-    line.label = tr(STR_LATEST_ACHIEVEMENT);
-    line.title = ACHIEVEMENTS.getTitle(latestUnlocked->definition->id);
-    line.percent = 100;
-  } else {
-    line.title = tr(STR_NO_PENDING_ACHIEVEMENTS);
-  }
-  return line;
-}
-
-void drawAchievementPanel(const GfxRenderer& renderer, const Rect& rect, const bool compact) {
-  const auto achievement = getAchievementSleepLine();
-  renderer.drawRoundedRect(rect.x, rect.y, rect.width, rect.height, 2, 8, true);
-  drawTextClipped(renderer, SMALL_FONT_ID, rect.x + 16, rect.y + 17, achievement.label, rect.width - 32, true,
-                  EpdFontFamily::BOLD);
-
-  if (compact) {
-    drawTextClipped(renderer, UI_10_FONT_ID, rect.x + 16, rect.y + 47, achievement.title, rect.width - 32, true,
-                    EpdFontFamily::BOLD);
-    if (!achievement.progress.empty()) {
-      drawProgressBar(renderer, Rect{rect.x + 16, rect.y + 80, rect.width - 32, 14}, achievement.percent, 1);
-      drawRightText(renderer, SMALL_FONT_ID, rect.x + rect.width - 16, rect.y + 101, achievement.progress);
-    }
-    return;
-  }
-
-  const auto titleLines =
-      renderer.wrappedText(UI_10_FONT_ID, achievement.title.c_str(), rect.width - 32, 2, EpdFontFamily::BOLD);
-  int textY = rect.y + 42;
-  for (const auto& line : titleLines) {
-    renderer.drawText(UI_10_FONT_ID, rect.x + 16, textY, line.c_str(), true, EpdFontFamily::BOLD);
-    textY += 22;
-  }
-  if (!achievement.progress.empty()) {
-    const int barY = std::max(textY + 4, rect.y + rect.height - 59);
-    drawProgressBar(renderer, Rect{rect.x + 16, barY, rect.width - 32, 14}, achievement.percent, 1);
-    drawRightText(renderer, SMALL_FONT_ID, rect.x + rect.width - 16, barY + 22, achievement.progress);
-  }
 }
 
 void drawLatestBookPanel(const GfxRenderer& renderer, const Rect& rect) {
@@ -1043,8 +947,7 @@ void SleepActivity::renderReadingDashboardSleepScreen() const {
   drawMetricPanel(renderer, Rect{side + cardWidth + cardGap, metricsTop + cardHeight + cardGap, cardWidth, cardHeight},
                   tr(STR_BOOKS_FINISHED), std::to_string(READING_STATS.getBooksFinishedCount()));
 
-  drawAchievementPanel(renderer, Rect{side, 370, contentWidth, 138}, false);
-  drawLatestBookPanel(renderer, Rect{side, 530, contentWidth, pageHeight - 578});
+  drawLatestBookPanel(renderer, Rect{side, 370, contentWidth, pageHeight - 418});
 
   displaySleepBuffer(renderer);
 }

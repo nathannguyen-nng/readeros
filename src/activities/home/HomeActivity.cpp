@@ -26,14 +26,11 @@
 #include "OpdsServerStore.h"
 #include "ReadingStatsStore.h"
 #include "RecentBooksStore.h"
-#include "activities/apps/AchievementsActivity.h"
 #include "activities/apps/BookmarksAppActivity.h"
 #include "activities/apps/DictionaryActivity.h"
 #include "activities/apps/FavoritesAppActivity.h"
-#include "activities/apps/FlashcardsAppActivity.h"
 #include "activities/apps/IfFoundActivity.h"
 #include "activities/apps/ReadingHeatmapActivity.h"
-#include "activities/apps/ReadingProfileActivity.h"
 #include "activities/apps/ReadingStatsActivity.h"
 #include "activities/apps/SleepAppActivity.h"
 #include "activities/apps/SyncDayActivity.h"
@@ -995,14 +992,6 @@ void HomeActivity::loop() {
           startActivityForResult(std::make_unique<ReadingHeatmapActivity>(renderer, mappedInput),
                                  [this](const ActivityResult&) { requestFreshHomeRender(true); });
           break;
-        case ShortcutId::ReadingProfile:
-          startActivityForResult(std::make_unique<ReadingProfileActivity>(renderer, mappedInput),
-                                 [this](const ActivityResult&) { requestFreshHomeRender(true); });
-          break;
-        case ShortcutId::Achievements:
-          startActivityForResult(std::make_unique<AchievementsActivity>(renderer, mappedInput),
-                                 [this](const ActivityResult&) { requestFreshHomeRender(true); });
-          break;
         case ShortcutId::IfFound:
           startActivityForResult(std::make_unique<IfFoundActivity>(renderer, mappedInput),
                                  [this](const ActivityResult&) { requestFreshHomeRender(true); });
@@ -1021,10 +1010,6 @@ void HomeActivity::loop() {
                                    reloadHomeBooks(metrics.homeRecentBooksCount);
                                    requestFreshHomeRender(true);
                                  });
-          break;
-        case ShortcutId::Flashcards:
-          startActivityForResult(std::make_unique<FlashcardsAppActivity>(renderer, mappedInput),
-                                 [this](const ActivityResult&) { requestFreshHomeRender(true); });
           break;
         case ShortcutId::Dictionary:
           startActivityForResult(std::make_unique<DictionaryActivity>(renderer, mappedInput),

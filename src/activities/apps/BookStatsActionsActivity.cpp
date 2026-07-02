@@ -7,7 +7,6 @@
 #include <string>
 #include <variant>
 
-#include "AchievementsStore.h"
 #include "BookReadingAdjustmentActivity.h"
 #include "ReadingDateSelectionActivity.h"
 #include "ReadingStatsStore.h"
@@ -79,7 +78,6 @@ void BookStatsActionsActivity::confirmResetBookStats() {
       std::make_unique<ConfirmationActivity>(renderer, mappedInput, tr(STR_RESET_THIS_BOOK_STATS_CONFIRM), bookTitle),
       [this](const ActivityResult& result) {
         if (!result.isCancelled && READING_STATS.removeBook(bookPath)) {
-          ACHIEVEMENTS.rebuildProgressFromCurrentStats();
           ActivityResult resetResult;
           resetResult.data = MenuResult{RESULT_RESET_BOOK_STATS};
           setResult(std::move(resetResult));
