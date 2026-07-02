@@ -41,7 +41,26 @@
 class HalGPIO {
 #if CROSSPOINT_EMULATED == 0
   InputManager inputMgr;
+
+  // Input polling task state. The task samples inputMgr at a fixed rate so
+  // short presses aren't lost when the main loop slows down for power saving.
+  TaskHandle_t inputTaskHandle = nullptr;
+  volatile bool inputTaskStopRequested = false;
+  portMUX_TYPE inputMux = portMUX_INITIALIZER_UNLOCKED;
+  // Event bits accumulated by the poll task, drained by update().
+  uint8_t pendingPressed = 0;
+  uint8_t pendingReleased = 0;
+
+  // With InputManager's 5ms debounce this reliably catches taps >= ~35ms.
+  static constexpr uint32_t INPUT_TASK_PERIOD_MS = 15;
+
+  static void inputTaskTrampoline(void* param);
+  void inputTaskLoop();
 #endif
+
+  // Per-main-loop-cycle event snapshots read by wasPressed()/wasReleased().
+  uint8_t pressedSnapshot = 0;
+  uint8_t releasedSnapshot = 0;
 
   bool lastUsbConnected = false;
   bool usbStateChanged = false;
@@ -61,6 +80,20 @@ class HalGPIO {
 
   // Start button GPIO and setup SPI for screen and SD card
   void begin();
+
+  // Start/stop the fixed-rate input polling task. While the task runs,
+  // update() drains events accumulated by the task instead of sampling
+  // directly, so presses shorter than one main-loop cycle are not dropped.
+  // Must be started only after the setup-time direct polling loops
+  // (verifyPowerButtonWakeup etc.) are done, and stopped before any code
+  // that resumes calling update() in a tight loop around deep sleep.
+#if CROSSPOINT_EMULATED == 0
+  void startInputTask();
+  void stopInputTask();
+#else
+  void startInputTask() {}
+  void stopInputTask() {}
+#endif
 
   // Button input methods
   void update();

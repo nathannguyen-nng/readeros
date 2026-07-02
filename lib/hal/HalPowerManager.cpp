@@ -61,6 +61,9 @@ void HalPowerManager::setPowerSaving(bool enabled) {
 }
 
 void HalPowerManager::startDeepSleep(HalGPIO& gpio) const {
+  // Stop the input polling task: the wait loop below polls directly, and no
+  // ADC activity should happen once we start isolating GPIOs for sleep.
+  gpio.stopInputTask();
   // Ensure that the power button has been released to avoid immediately turning back on if you're holding it
   while (gpio.isPressed(HalGPIO::BTN_POWER)) {
     delay(50);

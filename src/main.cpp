@@ -533,6 +533,11 @@ void setup() {
 
   // Ensure we're not still holding the power button before leaving setup
   waitForPowerRelease();
+
+  // All setup-time direct input polling is done; from here on a fixed-rate
+  // task samples the buttons so short presses aren't lost when loop() slows
+  // down for power saving.
+  gpio.startInputTask();
 }
 
 void loop() {

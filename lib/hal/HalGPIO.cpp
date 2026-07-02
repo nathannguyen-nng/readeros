@@ -202,8 +202,82 @@ void HalGPIO::begin() {
   }
 }
 
+void HalGPIO::inputTaskTrampoline(void* param) { static_cast<HalGPIO*>(param)->inputTaskLoop(); }
+
+void HalGPIO::inputTaskLoop() {
+  TickType_t wake = xTaskGetTickCount();
+  while (!inputTaskStopRequested) {
+    inputMgr.update();
+    uint8_t pressed = 0;
+    uint8_t released = 0;
+    for (uint8_t i = 0; i <= BTN_POWER; ++i) {
+      if (inputMgr.wasPressed(i)) {
+        pressed |= 1 << i;
+      }
+      if (inputMgr.wasReleased(i)) {
+        released |= 1 << i;
+      }
+    }
+    if (pressed | released) {
+      portENTER_CRITICAL(&inputMux);
+      pendingPressed |= pressed;
+      pendingReleased |= released;
+      portEXIT_CRITICAL(&inputMux);
+    }
+    vTaskDelayUntil(&wake, pdMS_TO_TICKS(INPUT_TASK_PERIOD_MS));
+  }
+  // Self-delete so the task is never torn down mid-critical-section.
+  inputTaskHandle = nullptr;
+  vTaskDelete(nullptr);
+}
+
+void HalGPIO::startInputTask() {
+  if (inputTaskHandle != nullptr) {
+    return;
+  }
+  inputTaskStopRequested = false;
+  xTaskCreate(&inputTaskTrampoline, "InputPoll",
+              3072,             // Stack size
+              this,             // Parameters
+              2,                // Priority above loopTask/render so long renders can't starve polling
+              &inputTaskHandle  // Task handle
+  );
+}
+
+void HalGPIO::stopInputTask() {
+  if (inputTaskHandle == nullptr) {
+    return;
+  }
+  inputTaskStopRequested = true;
+  // Bounded wait: the task self-deletes within one poll period.
+  while (inputTaskHandle != nullptr) {
+    delay(1);
+  }
+}
+
 void HalGPIO::update() {
-  inputMgr.update();
+  if (inputTaskHandle != nullptr) {
+    // Poll task owns inputMgr; drain the events it accumulated since last cycle.
+    portENTER_CRITICAL(&inputMux);
+    pressedSnapshot = pendingPressed;
+    releasedSnapshot = pendingReleased;
+    pendingPressed = 0;
+    pendingReleased = 0;
+    portEXIT_CRITICAL(&inputMux);
+  } else {
+    // Direct polling (boot verification and deep-sleep wait loops).
+    inputMgr.update();
+    pressedSnapshot = 0;
+    releasedSnapshot = 0;
+    for (uint8_t i = 0; i <= BTN_POWER; ++i) {
+      if (inputMgr.wasPressed(i)) {
+        pressedSnapshot |= 1 << i;
+      }
+      if (inputMgr.wasReleased(i)) {
+        releasedSnapshot |= 1 << i;
+      }
+    }
+  }
   const bool connected = isUsbConnected();
   usbStateChanged = (connected != lastUsbConnected);
   lastUsbConnected = connected;
@@ -213,19 +287,21 @@ bool HalGPIO::wasUsbStateChanged() const { return usbStateChanged; }
 
 bool HalGPIO::isPressed(uint8_t buttonIndex) const { return inputMgr.isPressed(buttonIndex); }
 
-bool HalGPIO::wasPressed(uint8_t buttonIndex) const { return inputMgr.wasPressed(buttonIndex); }
+bool HalGPIO::wasPressed(uint8_t buttonIndex) const { return pressedSnapshot & (1 << buttonIndex); }
 
-bool HalGPIO::wasAnyPressed() const { return inputMgr.wasAnyPressed(); }
+bool HalGPIO::wasAnyPressed() const { return pressedSnapshot != 0; }
 
-bool HalGPIO::wasReleased(uint8_t buttonIndex) const { return inputMgr.wasReleased(buttonIndex); }
+bool HalGPIO::wasReleased(uint8_t buttonIndex) const { return releasedSnapshot & (1 << buttonIndex); }
 
-bool HalGPIO::wasAnyReleased() const { return inputMgr.wasAnyReleased(); }
+bool HalGPIO::wasAnyReleased() const { return releasedSnapshot != 0; }
 
 unsigned long HalGPIO::getHeldTime() const { return inputMgr.getHeldTime(); }
 
 unsigned long HalGPIO::getPowerButtonHeldTime() const { return inputMgr.getPowerButtonHeldTime(); }
 
 void HalGPIO::startDeepSleep() {
+  // Reclaim inputMgr ownership so the release-wait loop below polls directly.
+  stopInputTask();
   // Ensure that the power button has been released to avoid immediately turning back on if you're holding it
   while (inputMgr.isPressed(BTN_POWER)) {
     delay(50);
@@ -237,6 +313,7 @@ void HalGPIO::startDeepSleep() {
   esp_deep_sleep_start();
 }
 
+// Must run before startInputTask(): it polls inputMgr directly from this thread.
 void HalGPIO::verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed) {
   if (shortPressAllowed) {
     // Fast path - no duration check needed
