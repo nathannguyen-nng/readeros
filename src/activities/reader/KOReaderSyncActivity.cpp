@@ -20,42 +20,20 @@
 #include "components/UITheme.h"
 #include "fontIds.h"
 #include "util/CompletedBookMover.h"
+#include "util/NetworkMemory.h"
 #include "util/TimeUtils.h"
 
 namespace {
 constexpr time_t NTP_RESYNC_MIN_INTERVAL_SEC = 15 * 60;
 
-void logSyncMemSnapshot(const char* stage) {
-  const uint32_t freeHeap = esp_get_free_heap_size();
-  const uint32_t contigHeap = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT | MALLOC_CAP_DEFAULT);
-  LOG_DBG("KOSync", "Sync mem[%s]: free=%lu contig=%lu", stage, freeHeap, contigHeap);
+void logSyncMemSnapshot(const char* stage) { NetworkMemory::logSnapshot("KOSync", stage); }
+
+void prepareMemoryBeforeNetwork(GfxRenderer& renderer, const char* stage) {
+  NetworkMemory::prepareBeforeNetwork(renderer, "KOSync", stage);
 }
 
-void trimMemoryBeforeTls(const GfxRenderer& renderer) {
-  if (auto* cacheManager = renderer.getFontCacheManager()) {
-    cacheManager->clearCache();
-    cacheManager->resetStats();
-    LOG_DBG("KOSync", "Cleared font cache before TLS");
-  }
-
-  unsigned releasedSdFonts = 0;
-  for (const auto& entry : renderer.getSdCardFonts()) {
-    if (!entry.second) continue;
-    entry.second->releaseForLowMemory();
-    releasedSdFonts++;
-  }
-  if (releasedSdFonts > 0) {
-    LOG_DBG("KOSync", "Released %u SD font runtime cache(s) before TLS", releasedSdFonts);
-  }
-}
-
-void prepareMemoryBeforeNetwork(const GfxRenderer& renderer, const char* stage) {
-  // NTP uses lwIP/UDP resources. KOReader sync only needs the clock before TLS
-  // certificate validation, so stop SNTP before the HTTPS request heap check.
-  TimeUtils::stopNtp();
-  trimMemoryBeforeTls(renderer);
-  delay(20);
-  logSyncMemSnapshot(stage);
+void restoreMemoryAfterNetwork(GfxRenderer& renderer, const char* stage) {
+  NetworkMemory::restoreAfterNetwork(renderer, "KOSync", stage);
 }
 
 void syncTimeWithNTP() {
@@ -125,10 +103,11 @@ void KOReaderSyncActivity::onWifiSelectionComplete(const bool success) {
   requestUpdateAndWait();
 
   logSyncMemSnapshot("before_performSync");
-  prepareMemoryBeforeNetwork(renderer, "after_trim_before_performSync");
+  prepareNetworkMemory("after_trim_before_performSync");
 
   performSync();
 
+  restoreNetworkMemory("after_performSync_restore");
   logSyncMemSnapshot("after_performSync");
 }
 
@@ -172,7 +151,7 @@ void KOReaderSyncActivity::performSync() {
 
   // Push intent warms the session first so PUT can reuse the connection.
   if (syncIntent == KOReaderSyncIntentState::PUSH_LOCAL || syncIntent == KOReaderSyncIntentState::AUTO_PUSH) {
-    prepareMemoryBeforeNetwork(renderer, "before_push_warmup_get");
+    prepareNetworkMemory("before_push_warmup_get");
     KOReaderSyncClient::beginPersistentSession();
     KOReaderProgress warmupProgress;
     auto warmupResult = KOReaderSyncClient::getProgress(documentHash, warmupProgress);
@@ -212,7 +191,7 @@ void KOReaderSyncActivity::performSync() {
     statusMessage = tr(STR_FETCH_PROGRESS);
   }
   requestUpdateAndWait();
-  prepareMemoryBeforeNetwork(renderer, "before_getProgress");
+  prepareNetworkMemory("before_getProgress");
 
   KOReaderSyncClient::beginPersistentSession();
 
@@ -241,6 +220,7 @@ void KOReaderSyncActivity::performSync() {
       return;
     }
 
+    KOReaderSyncClient::endPersistentSession();
     {
       RenderLock lock(*this);
       state = NO_REMOTE_PROGRESS;
@@ -317,7 +297,7 @@ void KOReaderSyncActivity::performSync() {
   }
 
   // Compare intent: pre-map remote so chooser always shows concrete data.
-  if (!ensureRemotePositionMapped(false)) {
+  if (!ensureRemotePositionMapped()) {
     {
       RenderLock lock(*this);
       state = SYNC_FAILED;
@@ -384,7 +364,7 @@ void KOReaderSyncActivity::performUpload() {
     return;
   }
 
-  prepareMemoryBeforeNetwork(renderer, "after_trim_before_updateProgress");
+  prepareNetworkMemory("after_trim_before_updateProgress");
   logSyncMemSnapshot("before_updateProgress");
 
   KOReaderSyncClient::beginPersistentSession();
@@ -397,6 +377,7 @@ void KOReaderSyncActivity::performUpload() {
   const auto result = KOReaderSyncClient::updateProgress(progress);
   KOReaderSyncClient::endPersistentSession();
   logSyncMemSnapshot("after_updateProgress");
+  restoreNetworkMemory("after_updateProgress_restore");
 
   if (result != KOReaderSyncClient::OK) {
     wifiOff();
@@ -429,6 +410,19 @@ void KOReaderSyncActivity::performUpload() {
   requestUpdate(true);
 }
 
+void KOReaderSyncActivity::prepareNetworkMemory(const char* stage) {
+  prepareMemoryBeforeNetwork(renderer, stage);
+  networkMemoryReleasePending = true;
+}
+
+void KOReaderSyncActivity::restoreNetworkMemory(const char* stage) {
+  if (!networkMemoryReleasePending) {
+    return;
+  }
+  restoreMemoryAfterNetwork(renderer, stage);
+  networkMemoryReleasePending = false;
+}
+
 void KOReaderSyncActivity::onEnter() {
   Activity::onEnter();
   logSyncMemSnapshot("onEnter_begin");
@@ -458,6 +452,7 @@ void KOReaderSyncActivity::onExit() {
 
   logSyncMemSnapshot("onExit_before_cleanup");
   KOReaderSyncClient::endPersistentSession();
+  restoreNetworkMemory("onExit_restore");
   wifiOff();
   releaseEpubForMapping();
   logSyncMemSnapshot("onExit_after_cleanup");
@@ -476,6 +471,7 @@ void KOReaderSyncActivity::resumeReader(const KOReaderSyncOutcomeState outcome, 
   }
 
   closeRequested = true;
+  restoreNetworkMemory("before_resume_reader_restore");
   auto& sync = APP_STATE.koReaderSyncSession;
   sync.outcome = outcome;
   if (appliedResult) {
