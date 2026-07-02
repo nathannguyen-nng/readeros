@@ -234,6 +234,16 @@ bool isAsciiSpace(const char c) { return c == ' ' || c == '\r' || c == '\n' || c
 
 char asciiLower(const char c) { return (c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c; }
 
+bool asciiEqualsIgnoreCase(const std::string& value, const char* expected) {
+  if (!expected) return value.empty();
+  const size_t expectedLen = strlen(expected);
+  if (value.size() != expectedLen) return false;
+  for (size_t i = 0; i < expectedLen; i++) {
+    if (asciiLower(value[i]) != asciiLower(expected[i])) return false;
+  }
+  return true;
+}
+
 bool startsHrefAttribute(const std::string& text, const size_t pos) {
   if (pos + 4 > text.size()) return false;
   if (pos > 0 && isAsciiNameChar(text[pos - 1])) return false;
@@ -1245,13 +1255,26 @@ void XMLCALL ChapterHtmlSlimParser::startElement(void* userData, const XML_Char*
   if (matches(name, IMAGE_TAGS, std::size(IMAGE_TAGS))) {
     std::string src;
     std::string alt;
+    std::string role;
+    std::string ariaHidden;
     if (atts != nullptr) {
       for (int i = 0; atts[i]; i += 2) {
         if (strcmp(atts[i], "src") == 0) {
           src = atts[i + 1];
         } else if (strcmp(atts[i], "alt") == 0) {
           alt = atts[i + 1];
+        } else if (strcmp(atts[i], "role") == 0) {
+          role = atts[i + 1];
+        } else if (strcmp(atts[i], "aria-hidden") == 0) {
+          ariaHidden = atts[i + 1];
         }
+      }
+
+      if (asciiEqualsIgnoreCase(role, "presentation") || asciiEqualsIgnoreCase(role, "none") ||
+          asciiEqualsIgnoreCase(ariaHidden, "true")) {
+        self->skipUntilDepth = self->depth;
+        self->depth += 1;
+        return;
       }
 
       // imageRendering: 0=display, 1=placeholder (alt text only), 2=suppress entirely
