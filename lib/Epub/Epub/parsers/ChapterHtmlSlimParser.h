@@ -13,6 +13,7 @@
 #include "../FootnoteEntry.h"
 #include "../ParsedText.h"
 #include "../blocks/ImageBlock.h"
+#include "../converters/ImageToFramebufferDecoder.h"
 #include "../blocks/TextBlock.h"
 #include "../css/CssParser.h"
 #include "../css/CssStyle.h"
@@ -86,6 +87,21 @@ class ChapterHtmlSlimParser {
   bool lowMemoryImageFallback = false;
   bool lowMemoryAbort = false;
   bool attemptedTextLayoutFontCacheRelease = false;
+
+  struct CachedImageDimensions {
+    std::string resolvedPath;
+    ImageDimensions dimensions = {0, 0};
+  };
+
+  struct CachedImagePath {
+    std::string resolvedPath;
+    int16_t displayWidth = 0;
+    int16_t displayHeight = 0;
+    std::string cachePath;
+  };
+
+  std::vector<CachedImageDimensions> imageDimensionsCache;
+  std::vector<CachedImagePath> imagePathCache;
 
   // Style tracking (replaces depth-based approach)
   struct StyleStackEntry {
@@ -163,6 +179,9 @@ class ChapterHtmlSlimParser {
   void collectReferencedAnchor(const char* href);
   bool isReferencedAnchor(const std::string& anchor) const;
   bool shouldRecordAnchor(const char* elementName, const std::string& anchor) const;
+  bool readImageDimensions(const std::string& resolvedPath, ImageDimensions& dims);
+  std::string getReusableImageCachePath(const std::string& resolvedPath, const std::string& ext, int displayWidth,
+                                        int displayHeight);
   void startNewTextBlock(const BlockStyle& blockStyle);
   void flushPendingAnchor();
   void flushPartWordBuffer();

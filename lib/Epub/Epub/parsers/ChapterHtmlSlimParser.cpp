@@ -27,6 +27,8 @@ constexpr size_t MIN_SIZE_FOR_POPUP = 10 * 1024;  // 10KB
 constexpr size_t PARSE_BUFFER_SIZE = 1024;
 constexpr size_t MAX_ANCHORS_PER_CHAPTER = 1024;
 constexpr size_t MAX_REFERENCED_ANCHORS_PER_CHAPTER = 1024;
+constexpr size_t MAX_IMAGE_DIMENSION_CACHE_ENTRIES = 24;
+constexpr size_t MAX_IMAGE_PATH_CACHE_ENTRIES = 64;
 constexpr uint32_t MIN_FREE_HEAP_FOR_TEXT_LAYOUT = 44 * 1024;
 constexpr uint32_t MIN_MAX_ALLOC_FOR_TEXT_LAYOUT = 32 * 1024;
 constexpr uint32_t MIN_FREE_HEAP_FOR_TABLE_BUFFERING = 64 * 1024;
@@ -327,6 +329,46 @@ bool ChapterHtmlSlimParser::shouldRecordAnchor(const char* elementName, const st
   if (isReferencedAnchor(anchor)) return true;
   if (isNonNavigableInlineElement(elementName)) return false;
   return anchorData.size() < MAX_ANCHORS_PER_CHAPTER;
+}
+
+bool ChapterHtmlSlimParser::readImageDimensions(const std::string& resolvedPath, ImageDimensions& dims) {
+  for (const auto& cached : imageDimensionsCache) {
+    if (cached.resolvedPath == resolvedPath) {
+      dims = cached.dimensions;
+      return true;
+    }
+  }
+
+  auto* imagePrefix = static_cast<uint8_t*>(malloc(IMAGE_DIMENSION_PREFIX_BYTES));
+  size_t imagePrefixSize = 0;
+  const bool dimensionsRead =
+      imagePrefix && epub->readItemPrefixToBuffer(resolvedPath, imagePrefix, IMAGE_DIMENSION_PREFIX_BYTES,
+                                                  &imagePrefixSize, IMAGE_DIMENSION_PREFIX_CHUNK) &&
+      parseImageDimensionsFromPrefix(imagePrefix, imagePrefixSize, dims);
+  free(imagePrefix);
+
+  if (dimensionsRead && imageDimensionsCache.size() < MAX_IMAGE_DIMENSION_CACHE_ENTRIES) {
+    imageDimensionsCache.push_back({resolvedPath, dims});
+  }
+
+  return dimensionsRead;
+}
+
+std::string ChapterHtmlSlimParser::getReusableImageCachePath(const std::string& resolvedPath, const std::string& ext,
+                                                             const int displayWidth, const int displayHeight) {
+  for (const auto& cached : imagePathCache) {
+    if (cached.resolvedPath == resolvedPath && cached.displayWidth == displayWidth &&
+        cached.displayHeight == displayHeight) {
+      return cached.cachePath;
+    }
+  }
+
+  std::string cachedImagePath = imageBasePath + std::to_string(imageCounter++) + ext;
+  if (imagePathCache.size() < MAX_IMAGE_PATH_CACHE_ENTRIES && displayWidth > 0 && displayHeight > 0) {
+    imagePathCache.push_back({resolvedPath, static_cast<int16_t>(displayWidth), static_cast<int16_t>(displayHeight),
+                              cachedImagePath});
+  }
+  return cachedImagePath;
 }
 
 void ChapterHtmlSlimParser::collectReferencedAnchors() {
@@ -1241,29 +1283,20 @@ void XMLCALL ChapterHtmlSlimParser::startElement(void* userData, const XML_Char*
           }
 
           if (canProcessImage) {
-          // Resolve the image path relative to the HTML file
-          std::string resolvedPath = FsHelpers::normalisePath(FsHelpers::decodeUriEscapes(self->contentBase + src));
+            // Resolve the image path relative to the HTML file
+            std::string resolvedPath = FsHelpers::normalisePath(FsHelpers::decodeUriEscapes(self->contentBase + src));
 
-          if (ImageDecoderFactory::isFormatSupported(resolvedPath)) {
-            // Create a unique filename for the cached image
-            std::string ext;
-            size_t extPos = resolvedPath.rfind('.');
-            if (extPos != std::string::npos) {
-              ext = resolvedPath.substr(extPos);
-            }
-            std::string cachedImagePath = self->imageBasePath + std::to_string(self->imageCounter++) + ext;
+            if (ImageDecoderFactory::isFormatSupported(resolvedPath)) {
+              std::string ext;
+              size_t extPos = resolvedPath.rfind('.');
+              if (extPos != std::string::npos) {
+                ext = resolvedPath.substr(extPos);
+              }
 
-            auto* imagePrefix = static_cast<uint8_t*>(malloc(IMAGE_DIMENSION_PREFIX_BYTES));
-            ImageDimensions dims = {0, 0};
-            size_t imagePrefixSize = 0;
-            const bool dimensionsRead =
-                imagePrefix &&
-                self->epub->readItemPrefixToBuffer(resolvedPath, imagePrefix, IMAGE_DIMENSION_PREFIX_BYTES,
-                                                   &imagePrefixSize, IMAGE_DIMENSION_PREFIX_CHUNK) &&
-                parseImageDimensionsFromPrefix(imagePrefix, imagePrefixSize, dims);
-            free(imagePrefix);
+              ImageDimensions dims = {0, 0};
+              const bool dimensionsRead = self->readImageDimensions(resolvedPath, dims);
 
-            if (dimensionsRead) {
+              if (dimensionsRead) {
                 LOG_DBG("EHP", "Image dimensions: %dx%d", dims.width, dims.height);
 
                 int displayWidth = 0;
@@ -1407,6 +1440,9 @@ void XMLCALL ChapterHtmlSlimParser::startElement(void* userData, const XML_Char*
                 // Apply top margin from container block
                 self->currentPageNextY += imageMarginTop;
 
+                const std::string cachedImagePath =
+                    self->getReusableImageCachePath(resolvedPath, ext, displayWidth, displayHeight);
+
                 // Create ImageBlock and add to page
                 auto imageBlock = std::shared_ptr<ImageBlock>(new (std::nothrow) ImageBlock(
                     cachedImagePath, displayWidth, displayHeight, self->epub->getPath(), resolvedPath));
@@ -1444,10 +1480,10 @@ void XMLCALL ChapterHtmlSlimParser::startElement(void* userData, const XML_Char*
                 self->depth += 1;
                 return;
               } else {
-              self->lowMemoryImageFallback = true;
-              LOG_ERR("EHP", "Failed to read image dimensions: %s", resolvedPath.c_str());
-            }
-          }  // isFormatSupported
+                self->lowMemoryImageFallback = true;
+                LOG_ERR("EHP", "Failed to read image dimensions: %s", resolvedPath.c_str());
+              }
+            }  // isFormatSupported
           }
         }
       }
