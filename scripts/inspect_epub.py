@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect an EPUB for CPR-vCodex first-load risk factors.
+"""Inspect an EPUB for readerOS first-load risk factors.
 
 This is a host-side triage tool. It does not execute the firmware parser, but it
 checks the structures and entry sizes that the device walks while building the
@@ -77,7 +77,7 @@ def is_image(media_type: str, href: str) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Inspect an EPUB for CPR-vCodex load/cache-build risk factors.")
+    parser = argparse.ArgumentParser(description="Inspect an EPUB for readerOS load/cache-build risk factors.")
     parser.add_argument("epub", type=Path, help="Path to the .epub file")
     parser.add_argument("--top", type=int, default=12, help="Number of largest ZIP entries to print")
     parser.add_argument("--spine", action="store_true", help="Print all spine entries with inflated sizes")

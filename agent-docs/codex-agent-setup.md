@@ -22,7 +22,7 @@ selection clearer than one large project guide.
 
 ## MCP Policy
 
-No project MCP server is currently required for normal CPR-vCodex work.
+No project MCP server is currently required for normal readerOS work.
 
 Add MCP only when it provides a stable external capability that the repository,
 shell, browser, or GitHub plugin cannot provide well, such as live authoritative

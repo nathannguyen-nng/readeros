@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Repair common non-XHTML void tags inside an EPUB.
 
-CPR-vCodex parses chapter files with Expat, so EPUB spine documents must be
+readerOS parses chapter files with Expat, so EPUB spine documents must be
 well-formed XML/XHTML. Some "optimized" EPUBs contain HTML-style void tags such
 as <meta charset="utf-8">, which browsers tolerate but Expat rejects.
 """

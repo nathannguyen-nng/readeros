@@ -32,7 +32,7 @@ python -X utf8 -m platformio run -e default -j 1
   `VCODEX_RELEASE_SEQ`, and build kind defines.
 - Development builds include a `.devN-<sha>` suffix.
 - Release builds are tag-driven when `VCODEX_RELEASE_TAG` or `GITHUB_REF_NAME`
-  matches `<base>.<release>-cpr-vcodex`.
+  matches `<base>.<release>-readeros`.
 - Local release counters under `artifacts/` are ignored by git. Do not rely on
   them as the only source of published release truth.
 
@@ -41,7 +41,7 @@ python -X utf8 -m platformio run -e default -j 1
 Run pre-release checks before publishing:
 
 ```bash
-python scripts/pre_release_check.py --tag 1.2.0.39-cpr-vcodex
+python scripts/pre_release_check.py --tag 1.2.0.39-readeros
 ```
 
 The check should verify tag format, release artifacts, firmware budget, and

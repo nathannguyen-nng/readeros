@@ -11,7 +11,7 @@ Usage:
     python scripts/check_covers.py E:\\ --recent 3
 
 How it works:
-    cpr-vcodex stores each book's cached cover at:
+    readeros stores each book's cached cover at:
         <SD>/.crosspoint/epub_<hash>/thumb_<W>x<H>.bmp   (Lyra Carousel)
         <SD>/.crosspoint/epub_<hash>/thumb_<H>.bmp        (other themes)
 

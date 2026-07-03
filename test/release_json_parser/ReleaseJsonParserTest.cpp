@@ -722,11 +722,11 @@ void testVcodexTagNamedAsset() {
   printf("testVcodexTagNamedAsset...\n");
 
   const char* json = R"({
-      "tag_name": "1.2.0.39-cpr-vcodex",
+      "tag_name": "1.2.0.39-readeros",
       "assets": [
         {
-          "name": "1.2.0.39-cpr-vcodex.bin",
-          "browser_download_url": "https://example.com/1.2.0.39-cpr-vcodex.bin",
+          "name": "1.2.0.39-readeros.bin",
+          "browser_download_url": "https://example.com/1.2.0.39-readeros.bin",
           "size": 6329000
         }
       ]
@@ -737,8 +737,8 @@ void testVcodexTagNamedAsset() {
 
   ASSERT_TRUE(p.foundTag());
   ASSERT_TRUE(p.foundFirmware());
-  ASSERT_STREQ(p.getTagName(), "1.2.0.39-cpr-vcodex");
-  ASSERT_STREQ(p.getFirmwareUrl(), "https://example.com/1.2.0.39-cpr-vcodex.bin");
+  ASSERT_STREQ(p.getTagName(), "1.2.0.39-readeros");
+  ASSERT_STREQ(p.getFirmwareUrl(), "https://example.com/1.2.0.39-readeros.bin");
   ASSERT_EQ(p.getFirmwareSize(), 6329000u);
 
   printf("  passed\n");
@@ -749,11 +749,11 @@ void testVcodexTagNamedAssetPreferredOverLegacy() {
   printf("testVcodexTagNamedAssetPreferredOverLegacy...\n");
 
   const char* json = R"({
-      "tag_name": "1.2.0.39-cpr-vcodex",
+      "tag_name": "1.2.0.39-readeros",
       "assets": [
         {"name": "firmware.bin", "browser_download_url": "https://example.com/legacy.bin", "size": 1},
         {
-          "name": "1.2.0.39-cpr-vcodex.bin",
+          "name": "1.2.0.39-readeros.bin",
           "browser_download_url": "https://example.com/tagged.bin",
           "size": 2
         }
@@ -849,14 +849,14 @@ void testFirmwareManifestParser() {
   printf("testFirmwareManifestParser...\n");
 
   const char* json = R"({
-      "name": "CPR-vCodex",
-      "version": "1.3.0.9-cpr-vcodex",
+      "name": "readerOS",
+      "version": "1.3.0.9-readeros",
       "firmwareUrl": "firmware/firmware.bin",
-      "downloadUrl": "https://github.com/franssjz/cpr-vcodex/releases/download/1.3.0.9-cpr-vcodex/1.3.0.9-cpr-vcodex.bin",
+      "downloadUrl": "https://github.com/nathannguyen-nng/readeros/releases/download/1.3.0.9-readeros/1.3.0.9-readeros.bin",
       "size": 6192336,
       "source": {
         "type": "github-release",
-        "tag": "1.3.0.9-cpr-vcodex"
+        "tag": "1.3.0.9-readeros"
       },
       "builds": [
         {"chipFamily": "ESP32-C3", "parts": [{"path": "firmware.bin", "offset": 65536}]}
@@ -867,9 +867,9 @@ void testFirmwareManifestParser() {
   p.feed(json, strlen(json));
 
   ASSERT_TRUE(p.foundManifest());
-  ASSERT_STREQ(p.getVersion(), "1.3.0.9-cpr-vcodex");
+  ASSERT_STREQ(p.getVersion(), "1.3.0.9-readeros");
   ASSERT_STREQ(p.getDownloadUrl(),
-               "https://github.com/franssjz/cpr-vcodex/releases/download/1.3.0.9-cpr-vcodex/1.3.0.9-cpr-vcodex.bin");
+               "https://github.com/nathannguyen-nng/readeros/releases/download/1.3.0.9-readeros/1.3.0.9-readeros.bin");
   ASSERT_EQ(p.getFirmwareSize(), 6192336u);
 
   printf("  passed\n");
@@ -879,7 +879,7 @@ void testFirmwareManifestParser() {
 void testFirmwareManifestMissingDownloadUrl() {
   printf("testFirmwareManifestMissingDownloadUrl...\n");
 
-  const char* json = R"({"version":"1.3.0.9-cpr-vcodex","size":6192336})";
+  const char* json = R"({"version":"1.3.0.9-readeros","size":6192336})";
 
   FirmwareManifestJsonParser p;
   p.feed(json, strlen(json));

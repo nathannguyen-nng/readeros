@@ -1,5 +1,5 @@
 """
-PlatformIO pre-build script for CPR-vCodex versioning.
+PlatformIO pre-build script for readerOS versioning.
 
 Version scheme:
   - default/dev builds:  <base>.<release>.dev<dev_counter>
@@ -89,14 +89,14 @@ def _read_counter(counter_path, default_value):
 
 
 def _extract_release_number(base_version, text):
-    match = re.search(rf"{re.escape(base_version)}\.(\d+)-cpr-vcodex", text)
+    match = re.search(rf"{re.escape(base_version)}\.(\d+)-readeros", text)
     return int(match.group(1)) if match else None
 
 
 def _latest_tag_release_number(project_dir, base_version):
     try:
         tags = subprocess.check_output(
-            ["git", "tag", "--list", f"{base_version}.*-cpr-vcodex"],
+            ["git", "tag", "--list", f"{base_version}.*-readeros"],
             text=True,
             stderr=subprocess.PIPE,
             cwd=project_dir,
@@ -177,9 +177,9 @@ def release_number_from_tag(base_version):
     if not tag:
         return None
 
-    match = re.fullmatch(rf"{re.escape(base_version)}\.(\d+)-cpr-vcodex", tag)
+    match = re.fullmatch(rf"{re.escape(base_version)}\.(\d+)-readeros", tag)
     if not match:
-        raise ValueError(f"Release tag {tag!r} does not match expected pattern {base_version}.<release>-cpr-vcodex")
+        raise ValueError(f"Release tag {tag!r} does not match expected pattern {base_version}.<release>-readeros")
 
     return int(match.group(1)), tag
 
@@ -209,7 +209,7 @@ def inject_version(env):
         short_sha = get_git_short_sha(project_dir)
         version_string = f"{base_version}.{release_number}.dev{build_counter}-{short_sha}"
         build_kind = "dev"
-        print(f"CPR-vCodex release line: {release_number} ({release_counter_path})")
+        print(f"readerOS release line: {release_number} ({release_counter_path})")
     else:
         tagged_release = release_number_from_tag(base_version)
         if tagged_release:
@@ -230,8 +230,8 @@ def inject_version(env):
             ("VCODEX_BUILD_KIND", f'\\"{build_kind}\\"'),
         ]
     )
-    print(f"CPR-vCodex build version: {version_string}")
-    print(f"CPR-vCodex {build_kind} counter: {build_counter} ({counter_path})")
+    print(f"readerOS build version: {version_string}")
+    print(f"readerOS {build_kind} counter: {build_counter} ({counter_path})")
 
 
 try:

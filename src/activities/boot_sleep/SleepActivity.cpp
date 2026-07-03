@@ -22,7 +22,6 @@
 #include "activities/reader/ReaderUtils.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
-#include "images/Logo.h"
 #include "util/PngSleepRenderer.h"
 #include "util/ReadingStatsAnalytics.h"
 #include "util/SleepImageUtils.h"
@@ -657,20 +656,13 @@ void SleepActivity::renderCustomSleepScreen() const {
 }
 
 void SleepActivity::renderDefaultSleepScreen() const {
-  const auto pageWidth = renderer.getScreenWidth();
   const auto pageHeight = renderer.getScreenHeight();
 
-  constexpr int logoWidth = 174;
-  constexpr int logoHeight = 24;
-  constexpr int logoTextGap = 10;
   constexpr int subtitleGap = 25;
-  const int logoX = (pageWidth - logoWidth) / 2;
-  const int logoY = (pageHeight - logoHeight) / 2;
-  const int titleY = logoY + logoHeight + logoTextGap;
+  const int titleY = pageHeight / 2 - 20;
   const int subtitleY = titleY + subtitleGap;
 
   renderer.clearScreen();
-  renderer.drawIcon(Logo, logoX, logoY, logoWidth, logoHeight);
   renderer.drawCenteredText(UI_10_FONT_ID, titleY, tr(STR_CPR_VCODEX), true, EpdFontFamily::BOLD);
   renderer.drawCenteredText(SMALL_FONT_ID, subtitleY, tr(STR_SLEEPING));
 

@@ -42,7 +42,7 @@ void UITheme::setTheme(CrossPointSettings::UI_THEME type) {
       break;
     case CrossPointSettings::UI_THEME::LYRA_CUSTOM:
     default:
-      LOG_DBG("UI", "Using Lyra vCodex theme");
+      LOG_DBG("UI", "Using Lyra readerOS theme");
       currentTheme = std::make_unique<LyraCustomTheme>();
       currentMetrics = &LyraCustomMetrics::values;
       break;

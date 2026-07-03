@@ -47,9 +47,9 @@ def get_base_version(project_dir: Path) -> str:
 
 
 def parse_release_tag(tag: str, base_version: str) -> int:
-    match = re.fullmatch(rf"{re.escape(base_version)}\.(\d+)-cpr-vcodex", tag)
+    match = re.fullmatch(rf"{re.escape(base_version)}\.(\d+)-readeros", tag)
     if not match:
-        fail(f"Tag must match {base_version}.<release>-cpr-vcodex, got {tag!r}")
+        fail(f"Tag must match {base_version}.<release>-readeros, got {tag!r}")
     return int(match.group(1))
 
 
@@ -185,8 +185,8 @@ def validate_autoflash_manifest(project_dir: Path) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate CPR-vCodex release readiness before pushing a stable tag.")
-    parser.add_argument("--tag", required=True, help="Candidate stable tag, e.g. 1.2.0.39-cpr-vcodex")
+    parser = argparse.ArgumentParser(description="Validate readerOS release readiness before pushing a stable tag.")
+    parser.add_argument("--tag", required=True, help="Candidate stable tag, e.g. 1.2.0.39-readeros")
     parser.add_argument("--jobs", type=int, default=1, help="PlatformIO build jobs (default: 1)")
     parser.add_argument("--flash-budget-percent", type=float, default=97.5)
     parser.add_argument("--skip-build", action="store_true", help="Validate existing artifacts without rebuilding")

@@ -1,6 +1,6 @@
 ---
 name: cpr-reading-stats
-description: Use when changing CPR-vCodex reading statistics, streaks, achievements, daily goals, manual reading-time corrections, import/export, Reading Stats screens, analytics, or the browser stats editor.
+description: Use when changing readerOS reading statistics, streaks, achievements, daily goals, manual reading-time corrections, import/export, Reading Stats screens, analytics, or the browser stats editor.
 ---
 
 # CPR Reading Stats

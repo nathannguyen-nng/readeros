@@ -26,7 +26,7 @@ truth is the latest release asset.
 Use:
 
 ```bash
-python scripts/sync_autoflash_firmware.py --repo franssjz/cpr-vcodex
+python scripts/sync_autoflash_firmware.py --repo nathannguyen-nng/readeros
 ```
 
 The sync should update the manifest, local firmware copy, site text, and README
@@ -35,7 +35,7 @@ release references together.
 After sync, validate:
 
 ```bash
-python scripts/pre_release_check.py --tag 1.2.0.39-cpr-vcodex --skip-build --allow-existing-tag
+python scripts/pre_release_check.py --tag 1.2.0.39-readeros --skip-build --allow-existing-tag
 ```
 
 ## GitHub Pages
@@ -47,7 +47,7 @@ updated accordingly.
 Live URL:
 
 ```text
-https://franssjz.github.io/cpr-vcodex/
+https://nathannguyen-nng.github.io/readeros/
 ```
 
 If the public page shows an old version, check:

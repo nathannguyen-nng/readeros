@@ -1,15 +1,15 @@
 {
-  "name": "CPR-vCodex",
-  "version": "1.3.0.27-cpr-vcodex",
+  "name": "readerOS",
+  "version": "1.0.0.1-readeros",
   "firmwareUrl": "firmware/firmware.bin",
-  "downloadUrl": "https://github.com/franssjz/cpr-vcodex/releases/download/1.3.0.27-cpr-vcodex/1.3.0.27-cpr-vcodex.bin",
+  "downloadUrl": "https://github.com/nathannguyen-nng/readeros/releases/download/1.0.0.1-readeros/1.0.0.1-readeros.bin",
   "size": 6369664,
   "sha256": "73b015d4426f656c830c73a8306d39e9c25ee28b79abf0d1b61f58f026e5e252",
   "source": {
     "type": "github-release",
-    "repo": "franssjz/cpr-vcodex",
-    "tag": "1.3.0.27-cpr-vcodex",
-    "asset": "1.3.0.27-cpr-vcodex.bin",
+    "repo": "nathannguyen-nng/readeros",
+    "tag": "1.0.0.1-readeros",
+    "asset": "1.0.0.1-readeros.bin",
     "publishedAt": "2026-06-22T18:52:43Z",
     "assetUpdatedAt": "2026-06-22T18:52:43Z"
   },

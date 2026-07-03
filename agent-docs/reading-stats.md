@@ -5,7 +5,7 @@ or the browser stats editor.
 
 ## Purpose
 
-CPR-vCodex differentiates itself by helping users keep reading consistently.
+readerOS differentiates itself by helping users keep reading consistently.
 Statistics should favor trust, low friction, and clear recovery over flashy
 metrics.
 

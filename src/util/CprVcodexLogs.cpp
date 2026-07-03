@@ -9,7 +9,7 @@
 
 namespace {
 constexpr char LOG_DIR[] = CPR_VCODEX_LOG_DIR;
-constexpr char EVENTS_FILE[] = "/.crosspoint/cpr-vcodex-logs/boot_events.log";
+constexpr char EVENTS_FILE[] = "/.crosspoint/readeros-logs/boot_events.log";
 RTC_NOINIT_ATTR uint32_t logSequence = 0;
 
 uint32_t nextSequence() {

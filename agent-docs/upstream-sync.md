@@ -6,15 +6,15 @@ third-party forks, or resolving fork divergence.
 ## Repository Roles
 
 - `crosspoint-reader-master`: official upstream reference.
-- `cpr-vcodex`: this fork, focused on reading consistency and statistics.
+- `readeros`: this fork, focused on reading consistency and statistics.
 - `crosspet` and `papyrix`: third-party forks worth scanning for ideas.
 - `open-x4-sdk`: hardware SDK submodule/dependency area used by the firmware.
 
 ## Sync Strategy
 
 - Prefer selective cherry-picks over blind large merges when upstream changed
-  architecture near CPR-vCodex features.
-- Keep CPR-vCodex-specific UX and stats behavior unless upstream fixes a real
+  architecture near readerOS features.
+- Keep readerOS-specific UX and stats behavior unless upstream fixes a real
   bug or improves compatibility.
 - Document sync points in `CHANGELOG.md` when the relationship to upstream would
   otherwise be confusing.

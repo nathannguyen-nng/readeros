@@ -1,6 +1,6 @@
 ---
 name: cpr-upstream-sync
-description: Use when comparing or syncing CPR-vCodex with upstream crosspoint-reader, CrossInk, crosspet, papyrix, or other forks; cherry-picking changes; assessing fork divergence; or deciding whether a third-party feature should be ported.
+description: Use when comparing or syncing readerOS with upstream crosspoint-reader, CrossInk, crosspet, papyrix, or other forks; cherry-picking changes; assessing fork divergence; or deciding whether a third-party feature should be ported.
 ---
 
 # CPR Upstream Sync
@@ -14,7 +14,7 @@ work.
    git operation.
 2. Compare behavior and touched files before porting code. Prefer small,
    explainable changes over broad merges.
-3. Preserve CPR-vCodex UX, release safety, stats behavior, and browser
+3. Preserve readerOS UX, release safety, stats behavior, and browser
    auto-flash invariants even when upstream or a fork differs.
 4. When evaluating a third-party feature, look for:
    - memory and flash cost,

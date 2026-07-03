@@ -2,7 +2,7 @@
 
 #include <string>
 
-#define CPR_VCODEX_LOG_DIR "/.crosspoint/cpr-vcodex-logs"
+#define CPR_VCODEX_LOG_DIR "/.crosspoint/readeros-logs"
 
 namespace CprVcodexLogs {
 

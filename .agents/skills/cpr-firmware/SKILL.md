@@ -1,6 +1,6 @@
 ---
 name: cpr-firmware
-description: Use when modifying CPR-vCodex firmware code, reader behavior, UI activities, rendering, input handling, storage, HAL, EPUB/TXT/XTC parsing, settings, i18n, or ESP32-C3 resource-sensitive C++.
+description: Use when modifying readerOS firmware code, reader behavior, UI activities, rendering, input handling, storage, HAL, EPUB/TXT/XTC parsing, settings, i18n, or ESP32-C3 resource-sensitive C++.
 ---
 
 # CPR Firmware

@@ -15,7 +15,7 @@
 #define FONTS_MANIFEST_VERSION 1
 
 #define FONT_RELEASE_REPO_CROSSPOINT "crosspoint-reader/crosspoint-fonts"
-#define FONT_RELEASE_REPO_VCODEX "franssjz/cpr-vcodex"
+#define FONT_RELEASE_REPO_VCODEX "nathannguyen-nng/readeros"
 
 #ifndef FONT_MANIFEST_URL_FOR_REPO
 // Manifest + .cpfont assets are published by .github/workflows/release-fonts.yml

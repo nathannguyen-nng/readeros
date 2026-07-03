@@ -1,7 +1,7 @@
 # SD Card Fonts
 
-CPR-vCodex supports loading additional fonts from the SD card. Common
-downloadable families are provided by CrossPoint, while the CPR-vCodex source is
+readerOS supports loading additional fonts from the SD card. Common
+downloadable families are provided by CrossPoint, while the readerOS source is
 reserved for vCodex-only additions such as ChareInk.
 
 ## Installing Fonts
@@ -10,14 +10,14 @@ There are three ways to install fonts.
 
 ### Option 1: Download from device
 
-1. Connect your CPR-vCodex reader to WiFi
+1. Connect your readerOS reader to WiFi
 2. Go to **Settings > Reader > Manage Fonts**
 3. Browse available font families and tap to download
 4. Downloaded fonts appear immediately in **Settings > Reader > Font Family**
 
 ### Option 2: Upload via web browser
 
-1. Connect your CPR-vCodex reader to WiFi
+1. Connect your readerOS reader to WiFi
 2. Open the web interface in your browser (shown on the WiFi screen)
 3. Navigate to the **Fonts** tab
 4. Upload `.cpfont` files using the upload form
@@ -25,12 +25,12 @@ There are three ways to install fonts.
 ### Option 3: Manual SD card copy
 
 For the fastest full vCodex-only install, download
-[`all-fonts.zip`](https://github.com/franssjz/cpr-vcodex/releases/download/sd-fonts-m1-b4/all-fonts.zip)
+[`all-fonts.zip`](https://github.com/nathannguyen-nng/readeros/releases/download/sd-fonts-m1-b4/all-fonts.zip)
 and extract it into the root of the microSD card. It creates the ready-to-use
 `/fonts/<family>/*.cpfont` tree.
 
 For a single family, download the `.cpfont` files for the family you want from
-the [CPR-vCodex SD font release](https://github.com/franssjz/cpr-vcodex/releases/tag/sd-fonts-m1-b4),
+the [readerOS SD font release](https://github.com/nathannguyen-nng/readeros/releases/tag/sd-fonts-m1-b4),
 then create a folder with the family name and copy its `.cpfont` files to one
 of two locations on your SD card:
 
@@ -56,17 +56,17 @@ SD Card Root/
         `-- ...
 ```
 
-Insert the SD card and power on your CPR-vCodex reader. The installed families
+Insert the SD card and power on your readerOS reader. The installed families
 will appear under **Settings > Reader > Font Family**.
 
 ## Available Pre-Built Fonts
 
-The current list of CPR-vCodex-only pre-built fonts is maintained in
-`lib/EpdFont/scripts/sd-fonts.yaml` and published as CPR-vCodex release assets:
+The current list of readerOS-only pre-built fonts is maintained in
+`lib/EpdFont/scripts/sd-fonts.yaml` and published as readerOS release assets:
 
-- Stable device manifest: https://github.com/franssjz/cpr-vcodex/releases/tag/sd-fonts-m1-b4
-- Manual vCodex-only package: https://github.com/franssjz/cpr-vcodex/releases/download/sd-fonts-m1-b4/all-fonts.zip
-- Device manifest: https://github.com/franssjz/cpr-vcodex/releases/download/sd-fonts-m1-b4/fonts.json
+- Stable device manifest: https://github.com/nathannguyen-nng/readeros/releases/tag/sd-fonts-m1-b4
+- Manual vCodex-only package: https://github.com/nathannguyen-nng/readeros/releases/download/sd-fonts-m1-b4/all-fonts.zip
+- Device manifest: https://github.com/nathannguyen-nng/readeros/releases/download/sd-fonts-m1-b4/fonts.json
 
 The `sd-fonts-m<META>-b<BIN>` tag is tied to the manifest schema and `.cpfont`
 binary format supported by the firmware. When either format changes, update the

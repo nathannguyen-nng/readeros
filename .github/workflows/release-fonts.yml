@@ -2,7 +2,7 @@ name: Build & Publish SD Card Fonts
 
 # Fonts change rarely. Run this manually when needed, or let it publish
 # automatically when the source manifest/conversion pipeline changes.
-# CPR-vCodex publishes its own .cpfont files and fonts.json manifest as release
+# readerOS publishes its own .cpfont files and fonts.json manifest as release
 # assets in this repository so the firmware can keep working even if the
 # upstream font mirror disappears.
 on:
@@ -107,7 +107,7 @@ jobs:
 
               zip_file.writestr(
                   "README.txt",
-                  "Extract this archive into the root of the CPR-vCodex microSD card.\n"
+                  "Extract this archive into the root of the readerOS microSD card.\n"
                   "It creates /fonts/<family>/*.cpfont so the firmware can discover the fonts at boot.\n"
                   "After copying, reinsert the card and restart the device.\n",
               )
@@ -123,7 +123,7 @@ jobs:
           TITLE="SD Card Fonts (${VERSIONED#sd-fonts-})"
 
           cat > release-notes.md <<'EOF'
-          Pre-built `.cpfont` font files for CPR-vCodex.
+          Pre-built `.cpfont` font files for readerOS.
 
           Use **Settings > Reader > Manage Fonts** on the device, download individual files, or download `all-fonts.zip` and extract it into the root of the microSD card.
 

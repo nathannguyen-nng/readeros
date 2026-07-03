@@ -1,4 +1,4 @@
-# Claude Guide for CPR-vCodex
+# Claude Guide for readerOS
 
 This file is intentionally short. It exists for Claude Code compatibility and
 should stay small enough to be useful in every session.

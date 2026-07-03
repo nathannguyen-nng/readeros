@@ -13,11 +13,11 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_REPO = "franssjz/cpr-vcodex"
+DEFAULT_REPO = "nathannguyen-nng/readeros"
 APP_PARTITION_SIZE = 6_553_600
 MIN_FIRMWARE_SIZE = 1_000_000
-VERSION_RE = re.compile(r"\b\d+\.\d+\.\d+\.\d+(?:[.-][0-9A-Za-z]+)?-[0-9A-Za-z._-]*cpr-vcodex\b")
-FIRMWARE_TAG_RE = re.compile(r"^\d+\.\d+\.\d+\.\d+(?:[.-][0-9A-Za-z]+)?-cpr-vcodex$")
+VERSION_RE = re.compile(r"\b\d+\.\d+\.\d+\.\d+(?:[.-][0-9A-Za-z]+)?-[0-9A-Za-z._-]*readeros\b")
+FIRMWARE_TAG_RE = re.compile(r"^\d+\.\d+\.\d+\.\d+(?:[.-][0-9A-Za-z]+)?-readeros$")
 DOWNLOAD_URL_RE = re.compile(
     r"https://github\.com/[^/]+/[^/]+/releases/download/[^/]+/[^\"'\s<>]+\.bin"
 )
@@ -28,7 +28,7 @@ FALLBACK_RELEASE_RE = re.compile(r"(const FALLBACK_RELEASE = \{.*?\n    \};)", r
 def request_json(url: str, token: str | None) -> Any:
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "cpr-vcodex-autoflash-sync",
+        "User-Agent": "readeros-autoflash-sync",
     }
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -39,7 +39,7 @@ def request_json(url: str, token: str | None) -> Any:
 
 
 def download_bytes(url: str) -> bytes:
-    request = urllib.request.Request(url, headers={"User-Agent": "cpr-vcodex-autoflash-sync"})
+    request = urllib.request.Request(url, headers={"User-Agent": "readeros-autoflash-sync"})
     with urllib.request.urlopen(request, timeout=300) as response:
         return response.read()
 
@@ -71,7 +71,7 @@ def firmware_tag_sort_key(tag: str) -> tuple[int, int, int, int, int, str] | Non
     if not FIRMWARE_TAG_RE.fullmatch(tag):
         return None
 
-    prefix = tag.removesuffix("-cpr-vcodex")
+    prefix = tag.removesuffix("-readeros")
     match = FIRMWARE_VERSION_PREFIX_RE.match(prefix)
     if not match:
         return None
@@ -91,7 +91,7 @@ def fetch_firmware_release_by_tag(repo: str, tag: str, token: str | None) -> dic
     if release.get("draft") or release.get("prerelease"):
         raise RuntimeError(f"Release {tag} is not a stable published firmware release")
     if not FIRMWARE_TAG_RE.fullmatch(str(release.get("tag_name", ""))):
-        raise RuntimeError(f"Release {tag} is not a CPR-vCodex firmware release")
+        raise RuntimeError(f"Release {tag} is not a readerOS firmware release")
 
     select_firmware_asset(release)
     return release
@@ -118,7 +118,7 @@ def fetch_latest_firmware_release(repo: str, token: str | None) -> dict[str, Any
     if candidates:
         return max(candidates, key=lambda item: item[0])[1]
 
-    raise RuntimeError("Could not find a stable CPR-vCodex firmware release")
+    raise RuntimeError("Could not find a stable readerOS firmware release")
 
 
 def write_atomic(path: Path, data: bytes) -> None:
@@ -187,7 +187,7 @@ def sync_autoflash(repo: str, project_dir: Path, token: str | None, tag: str | N
     write_atomic(firmware_dir / "firmware.bin", firmware)
 
     manifest = {
-        "name": "CPR-vCodex",
+        "name": "readerOS",
         "version": tag,
         "firmwareUrl": "firmware/firmware.bin",
         "downloadUrl": download_url,

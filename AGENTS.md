@@ -1,6 +1,6 @@
-# CPR-vCodex Agent Guide
+# readerOS Agent Guide
 
-CPR-vCodex is a CrossPoint Reader fork for the Xteink X4 e-reader. Its goal is
+readerOS is a CrossPoint Reader fork for the Xteink X4 e-reader. Its goal is
 stable reading first, then careful improvements such as reading statistics,
 browser auto-flash, release checks, and fork/upstream cherry-picks that are worth
 the risk.
@@ -43,7 +43,7 @@ skill from `.agents/skills/`; for deeper project details, read the linked
 python -X utf8 -m platformio run -e default -j 1
 python -X utf8 -m platformio run -e gh_release -j 1
 python -X utf8 scripts/pre_release_check.py --tag <tag>
-python -X utf8 scripts/sync_autoflash_firmware.py --repo franssjz/cpr-vcodex
+python -X utf8 scripts/sync_autoflash_firmware.py --repo nathannguyen-nng/readeros
 ```
 
 If `pio` is available directly, `pio run -e default` and `pio run -e gh_release`

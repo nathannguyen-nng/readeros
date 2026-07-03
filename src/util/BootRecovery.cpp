@@ -10,7 +10,7 @@
 #include "CprVcodexLogs.h"
 
 namespace {
-constexpr char RECOVERY_FILE[] = "/.crosspoint/cpr-vcodex-logs/recovery.json";
+constexpr char RECOVERY_FILE[] = "/.crosspoint/readeros-logs/recovery.json";
 
 enum RecoveryBits : uint32_t {
   SKIP_SETTINGS = 1u << 0,

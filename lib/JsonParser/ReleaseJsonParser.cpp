@@ -50,7 +50,7 @@ void ReleaseJsonParser::commitAsset() {
   const bool isReleaseAsset = tagFound && strcmp(currentAssetName, releaseAssetName) == 0;
   const bool isLegacyAsset = strcmp(currentAssetName, "firmware.bin") == 0;
 
-  // CPR-vCodex releases publish tag-named firmware assets. Keep accepting
+  // readerOS releases publish tag-named firmware assets. Keep accepting
   // upstream's legacy firmware.bin name as a fallback, but prefer the tag match.
   if (isReleaseAsset || (isLegacyAsset && !firmwareFound)) {
     memcpy(firmwareUrl, currentAssetUrl, sizeof(firmwareUrl));

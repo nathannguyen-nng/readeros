@@ -1,11 +1,11 @@
-# SD Card Font Families for CPR-vCodex.
+# SD Card Font Families for readerOS.
 #
-# CPR-vCodex exposes CrossPoint's official font repository as the primary
+# readerOS exposes CrossPoint's official font repository as the primary
 # source in Manage Fonts. Keep this manifest limited to families that are not
-# already published by CrossPoint, so the vCodex source stays small and avoids
+# already published by CrossPoint, so the readerOS source stays small and avoids
 # duplicate slow downloads.
 #
-# Adding a new vCodex-only font family = adding a block here. No code changes
+# Adding a new readerOS-only font family = adding a block here. No code changes
 # needed; release-fonts.yml will build the .cpfont files and fonts.json.
 #
 # Fields:

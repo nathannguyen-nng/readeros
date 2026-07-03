@@ -1,6 +1,6 @@
 ---
 name: cpr-release
-description: Use when preparing CPR-vCodex releases, version bumps, GitHub tags, firmware artifacts, release notes, CI checks, GitHub Pages, browser auto-flash, docs/firmware/manifest.json, or docs/flash.html.
+description: Use when preparing readerOS releases, version bumps, GitHub tags, firmware artifacts, release notes, CI checks, GitHub Pages, browser auto-flash, docs/firmware/manifest.json, or docs/flash.html.
 ---
 
 # CPR Release
@@ -38,7 +38,7 @@ python -X utf8 scripts/pre_release_check.py --tag <tag>
    published release:
 
 ```powershell
-python -X utf8 scripts/sync_autoflash_firmware.py --repo franssjz/cpr-vcodex
+python -X utf8 scripts/sync_autoflash_firmware.py --repo nathannguyen-nng/readeros
 ```
 
 6. Verify the GitHub release, CI status, and Pages `flash.html`/manifest after

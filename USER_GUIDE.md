@@ -1,8 +1,8 @@
-# CPR-vCodex User Guide
+# readerOS User Guide
 
-Welcome to the **CPR-vCodex** firmware. This guide outlines the hardware controls, navigation, and reading features of the device.
+Welcome to the **readerOS** firmware. This guide outlines the hardware controls, navigation, and reading features of the device.
 
-- [CPR-vCodex User Guide](#cpr-vcodex-user-guide)
+- [readerOS User Guide](#readeros-user-guide)
   - [1. Hardware Overview](#1-hardware-overview)
     - [Button Layout](#button-layout)
   - [2. Power \& Startup](#2-power--startup)
@@ -103,7 +103,7 @@ See the [webserver docs](./docs/webserver.md) for more information on how to con
 
 ### 3.5.1 Calibre Wireless Transfers
 
-CPR-vCodex supports sending books from Calibre using the CrossPoint Reader device plugin.
+readerOS supports sending books from Calibre using the CrossPoint Reader device plugin.
 
 1. Install the plugin in Calibre:
    - Head to https://github.com/crosspoint-reader/calibre-plugins/releases to download the latest version of the crosspoint_reader plugin.
@@ -153,7 +153,7 @@ The Settings screen allows you to configure the device's behavior. There are a f
 
 - **UI Theme**: Set which UI theme to use:
   - "Lyra" - The new theme for Crosspoint featuring rounded elements and menu icons
-  - "Lyra vCodex" - CPR-vCodex's 3-book Home carousel with reading progress
+  - "Lyra readerOS" - readerOS's 3-book Home carousel with reading progress
   - "Lyra Carousel" - cover-focused 3-book Home carousel with recent/favorite book source
 - **Sunlight Fading Fix**: Configure whether to enable a software-fix for the issue where white X4 models may fade when used in direct sunlight:
   - "OFF" (default) - Disable the fix
@@ -231,7 +231,7 @@ You can also manage OPDS servers from the web interface while in File Transfer m
 
 #### 3.6.6 KOReader Sync Quick Setup
 
-CPR-vCodex can sync reading progress with KOReader-compatible sync servers.
+readerOS can sync reading progress with KOReader-compatible sync servers.
 It also interoperates with KOReader apps/devices when they use the same server and credentials.
 
 ##### Option A: Free Public Server (`sync.koreader.rocks`)
@@ -253,9 +253,9 @@ Already have KOReader Sync credentials? Skip registration; basic sync only requi
 
 When this returns `HTTP 402` with `{"code":2002,"message":"Username is already registered."}`, pick a different username or use that existing account.
 
-2. On each CPR-vCodex device:
+2. On each readerOS device:
    - Go to **Settings -> System -> KOReader Sync**.
-   - Set **Username** and **Password** (enter the plain password; CPR-vCodex computes MD5 internally, and use the same values on all devices).
+   - Set **Username** and **Password** (enter the plain password; readerOS computes MD5 internally, and use the same values on all devices).
    - Set **Sync Server URL** to `https://sync.koreader.rocks`, or leave it empty (both use the same default KOReader sync server).
    - Run **Authenticate**.
 
@@ -303,7 +303,7 @@ curl -H "Accept: application/vnd.koreader.v1+json" "http://<server-ip>:17200/hea
 ```
 
 3. Register a user once.
-CPR-vCodex authenticates against KOReader Sync (`koreader/kosync`) using an MD5 key, so register using the MD5 of your password:
+readerOS authenticates against KOReader Sync (`koreader/kosync`) using an MD5 key, so register using the MD5 of your password:
 
 > [!WARNING]
 > Sending a reusable MD5-derived password over plain HTTP is insecure.
@@ -324,9 +324,9 @@ curl -i "http://<server-ip>:17200/users/create" \
 
 If this returns `HTTP 402` with `{"code":2002,"message":"Username is already registered."}`, the account already exists.
 
-4. On each CPR-vCodex device:
+4. On each readerOS device:
    - Go to **Settings -> System -> KOReader Sync**.
-   - Set **Username** and **Password** (enter the plain password; CPR-vCodex computes MD5 internally, and use the same values on all devices).
+   - Set **Username** and **Password** (enter the plain password; readerOS computes MD5 internally, and use the same values on all devices).
    - Set **Sync Server URL** to `http://<server-ip>:17200`.
    - Run **Authenticate**.
 
@@ -342,8 +342,8 @@ The **Sleep Screen** setting controls what is displayed when the device goes to 
 
 | Mode | Behavior |
 |------|----------|
-| **Dark** (default) | The CPR-vCodex logo on a dark background. |
-| **Light** | The CPR-vCodex logo on a white background. |
+| **Dark** (default) | The readerOS logo on a dark background. |
+| **Light** | The readerOS logo on a white background. |
 | **Custom** | A custom image from the SD card (see below). Falls back to **Dark** if no custom image is found. |
 | **Cover** | The cover of the currently open book. Falls back to **Dark** if no book is open. |
 | **Cover + Custom** | The cover of the currently open book. Falls back to **Custom** behavior if no book is open. |
@@ -404,7 +404,7 @@ This feature can be disabled in the **[Controls Settings](#363-controls)** to he
 
 ### Supported Languages
 
-CPR-vCodex renders text using the following Unicode character blocks, enabling support for a wide range of languages:
+readerOS renders text using the following Unicode character blocks, enabling support for a wide range of languages:
 
 *   **Latin Script (Basic, Supplement, Extended-A):** Covers English, German, French, Spanish, Portuguese, Italian, Dutch, Swedish, Norwegian, Danish, Finnish, Polish, Czech, Hungarian, Romanian, Slovak, Slovenian, Turkish, and others.
 *   **Cyrillic Script (Standard and Extended):** Covers Russian, Ukrainian, Belarusian, Bulgarian, Serbian, Macedonian, Kazakh, Kyrgyz, Mongolian, and others.

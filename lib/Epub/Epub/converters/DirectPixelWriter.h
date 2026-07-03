@@ -94,7 +94,7 @@ struct DirectPixelWriter {
   }
 
   // For the current row (set via beginRow), narrow [colStart, colEnd) to the
-  // active output band. CPR-vCodex renders grayscale against a full framebuffer,
+  // active output band. readerOS renders grayscale against a full framebuffer,
   // so every column remains active here. Upstream tiled renderers override this
   // with a narrower range.
   inline void bandColRange(int xBase, int width, int& colStart, int& colEnd) const {
