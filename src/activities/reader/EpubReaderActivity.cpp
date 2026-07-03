@@ -21,6 +21,8 @@
 #include "EpubReaderPercentSelectionActivity.h"
 #include "DictionaryHistoryActivity.h"
 #include "DictionaryWordSelectActivity.h"
+#include "HighlightSelectActivity.h"
+#include "HighlightsActivity.h"
 #include "KOReaderCredentialStore.h"
 #include "KOReaderSyncActivity.h"
 #include "MappedInputManager.h"
@@ -228,6 +230,7 @@ void EpubReaderActivity::onEnter() {
   applyPendingSyncSession();
   stableBookId = BookIdentity::resolveStableBookId(epub->getPath());
   bookmarkStore.load(epub->getCachePath(), stableBookId);
+  highlightStore.load(stableBookId);
 
   FsFile f;
   bool loadedProgress = false;
@@ -308,6 +311,7 @@ void EpubReaderActivity::onExit() {
   APP_STATE.saveToFile();
   READING_STATS.endSession();
   bookmarkStore.save();
+  highlightStore.save();
   invalidateCurrentOverlayPageCache();
   section.reset();
   epub.reset();
@@ -594,6 +598,82 @@ std::shared_ptr<Page> EpubReaderActivity::loadCurrentPageForOverlay(int& outMarg
   auto sharedPage = std::shared_ptr<Page>(std::move(page));
   cacheCurrentPageForOverlay(sharedPage, orientedMarginLeft, orientedMarginTop);
   return sharedPage;
+}
+
+std::shared_ptr<Page> EpubReaderActivity::loadSectionPage(const uint16_t pageNumber) {
+  if (!section || pageNumber >= section->pageCount) {
+    return nullptr;
+  }
+
+  const int savedCurrentPage = section->currentPage;
+  section->currentPage = pageNumber;
+  auto page = section->loadPageFromSectionFile();
+  section->currentPage = savedCurrentPage;
+  if (!page) {
+    return nullptr;
+  }
+  return std::shared_ptr<Page>(std::move(page));
+}
+
+// Word-index invariant shared with HighlightSelectActivity::extractWords and HighlightStore: the
+// walk below (element order, TAG_PageLine only, min(words,xpos) entries, skipping nothing) must
+// stay identical to how HighlightSelectActivity numbers pageWordIndex or saved ranges will desync.
+void EpubReaderActivity::drawHighlightUnderlines(const Page& page, const int marginLeft, const int marginTop) const {
+  if (!section) {
+    return;
+  }
+  const auto currentPageNumber = static_cast<uint16_t>(section->currentPage);
+  if (highlightStore.isEmpty() || !highlightStore.hasAnyForSpine(static_cast<uint16_t>(currentSpineIndex))) {
+    return;
+  }
+
+  const int fontId = SETTINGS.getReaderFontId();
+  const int lineHeight = renderer.getLineHeight(fontId);
+
+  for (const auto& highlight : highlightStore.getAll()) {
+    if (highlight.spineIndex != currentSpineIndex || highlight.startPage > currentPageNumber ||
+        highlight.endPage < currentPageNumber) {
+      continue;
+    }
+
+    const uint16_t fromWord = (currentPageNumber == highlight.startPage) ? highlight.startWord : 0;
+    const uint16_t toWord = (currentPageNumber == highlight.endPage) ? highlight.endWord
+                                                                     : std::numeric_limits<uint16_t>::max();
+
+    uint16_t idx = 0;
+    for (const auto& element : page.elements) {
+      if (!element || element->getTag() != TAG_PageLine) continue;
+      const auto& line = static_cast<const PageLine&>(*element);
+      const auto& block = line.getBlock();
+      if (!block) continue;
+
+      const auto& wordList = block->getWords();
+      const auto& xPositions = block->getWordXpos();
+      const size_t count = std::min(wordList.size(), xPositions.size());
+
+      bool haveRange = false;
+      int xFirst = 0;
+      int xLast = 0;
+      for (size_t i = 0; i < count; ++i) {
+        if (idx >= fromWord && idx <= toWord) {
+          const int wordX = line.xPos + xPositions[i] + marginLeft;
+          const int wordEnd =
+              wordX + std::max(1, renderer.getTextAdvanceX(fontId, wordList[i].c_str(), EpdFontFamily::REGULAR));
+          if (!haveRange) {
+            xFirst = wordX;
+            haveRange = true;
+          }
+          xLast = wordEnd;
+        }
+        ++idx;
+      }
+
+      if (haveRange) {
+        const int y = line.yPos + marginTop + lineHeight - 1;
+        renderer.drawLine(xFirst, y, xLast, y, 2, true);
+      }
+    }
+  }
 }
 
 void EpubReaderActivity::saveCurrentPageBookmark() {
@@ -899,6 +979,66 @@ void EpubReaderActivity::onReaderMenuConfirm(EpubReaderMenuActivity::MenuAction 
     case EpubReaderMenuActivity::MenuAction::SAVE_BOOKMARK: {
       READING_STATS.noteActivity();
       saveCurrentPageBookmark();
+      break;
+    }
+    case EpubReaderMenuActivity::MenuAction::HIGHLIGHT: {
+      if (!section || section->currentPage < 0 || section->currentPage >= section->pageCount) {
+        requestUpdate();
+        break;
+      }
+      int overlayMarginLeft = 0;
+      int overlayMarginTop = 0;
+      auto page = loadCurrentPageForOverlay(overlayMarginLeft, overlayMarginTop);
+      if (!page) {
+        requestUpdate();
+        break;
+      }
+      READING_STATS.noteActivity();
+      startActivityForResult(
+          std::make_unique<HighlightSelectActivity>(
+              renderer, mappedInput, page, static_cast<uint16_t>(section->currentPage),
+              static_cast<uint16_t>(section->pageCount), SETTINGS.getReaderFontId(), overlayMarginLeft,
+              overlayMarginTop,
+              [this](const uint16_t pageNumber) { return loadSectionPage(pageNumber); },
+              [this](const uint16_t startPage, const uint16_t startWord, const uint16_t endPage,
+                     const uint16_t endWord, const std::string& snippet) {
+                highlightStore.add(HighlightStore::Highlight{static_cast<uint16_t>(currentSpineIndex), startPage,
+                                                              startWord, endPage, endWord, snippet});
+                highlightStore.save();
+              }),
+          [this](const ActivityResult&) {
+            READING_STATS.resumeSession();
+            ReaderUtils::requestReaderUiTransitionRefresh(renderer);
+            requestUpdate();
+          });
+      break;
+    }
+    case EpubReaderMenuActivity::MenuAction::VIEW_HIGHLIGHTS: {
+      READING_STATS.noteActivity();
+      startActivityForResult(
+          std::make_unique<HighlightsActivity>(
+              renderer, mappedInput, highlightStore.getAll(), epub, "",
+              [this](const HighlightStore::Highlight& highlight) {
+                const bool removed = highlightStore.remove(highlight);
+                if (removed) {
+                  highlightStore.save();
+                }
+                return removed;
+              }),
+          [this](const ActivityResult& result) {
+            READING_STATS.resumeSession();
+            if (!result.isCancelled) {
+              const auto& jump = std::get<BookmarkResult>(result.data);
+              if (currentSpineIndex != jump.spineIndex || !section ||
+                  section->currentPage != static_cast<int>(jump.page)) {
+                RenderLock lock(*this);
+                currentSpineIndex = jump.spineIndex;
+                nextPageNumber = static_cast<int>(jump.page);
+                sessionProgressTouched = true;
+                section.reset();
+              }
+            }
+          });
       break;
     }
     case EpubReaderMenuActivity::MenuAction::GO_TO_PERCENT: {
@@ -1455,6 +1595,7 @@ void EpubReaderActivity::renderContents(std::shared_ptr<Page> page, const int or
   const bool hasConfiguredRefreshMode = ReaderUtils::getConfiguredReaderRefreshMode(configuredRefreshMode);
 
   page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop, SETTINGS.bionicReading);
+  drawHighlightUnderlines(*page, orientedMarginLeft, orientedMarginTop);
   renderStatusBar();
   fcm->logStats("bw_render");
   const auto tBwRender = millis();
@@ -1478,6 +1619,7 @@ void EpubReaderActivity::renderContents(std::shared_ptr<Page> page, const int or
       // Re-render page content to restore images into the blanked area
       // Status bar is not re-rendered here to avoid reading stale dynamic values (e.g. battery %)
       page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop, SETTINGS.bionicReading);
+      drawHighlightUnderlines(*page, orientedMarginLeft, orientedMarginTop);
       renderer.displayBuffer(HalDisplay::FAST_REFRESH);
     } else {
       renderer.displayBuffer(HalDisplay::FAST_REFRESH);
@@ -1516,6 +1658,7 @@ void EpubReaderActivity::renderContents(std::shared_ptr<Page> page, const int or
       page->renderImages(renderer, orientedMarginLeft, orientedMarginTop);
     } else {
       page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop, SETTINGS.bionicReading);
+      drawHighlightUnderlines(*page, orientedMarginLeft, orientedMarginTop);
     }
     renderStatusBar();
     renderer.copyGrayscaleLsbBuffers();
@@ -1528,6 +1671,7 @@ void EpubReaderActivity::renderContents(std::shared_ptr<Page> page, const int or
       page->renderImages(renderer, orientedMarginLeft, orientedMarginTop);
     } else {
       page->render(renderer, SETTINGS.getReaderFontId(), orientedMarginLeft, orientedMarginTop, SETTINGS.bionicReading);
+      drawHighlightUnderlines(*page, orientedMarginLeft, orientedMarginTop);
     }
     renderStatusBar();
     renderer.copyGrayscaleMsbBuffers();

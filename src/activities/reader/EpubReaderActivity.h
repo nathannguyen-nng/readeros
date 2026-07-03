@@ -7,6 +7,7 @@
 
 #include "BookmarkStore.h"
 #include "EpubReaderMenuActivity.h"
+#include "HighlightStore.h"
 #include "activities/Activity.h"
 
 class Page;
@@ -34,6 +35,7 @@ class EpubReaderActivity final : public Activity {
   float pendingSpineProgress = 0.0f;
   std::string stableBookId;
   BookmarkStore bookmarkStore;
+  HighlightStore highlightStore;
   bool pendingScreenshot = false;
   bool skipNextButtonCheck = false;  // Skip button processing for one frame after subactivity exit
   bool automaticPageTurnActive = false;
@@ -95,6 +97,8 @@ class EpubReaderActivity final : public Activity {
   void applyOrientation(uint8_t orientation);
   void toggleAutoPageTurn(uint8_t selectedPageTurnOption);
   void saveCurrentPageBookmark();
+  std::shared_ptr<Page> loadSectionPage(uint16_t pageNumber);
+  void drawHighlightUnderlines(const Page& page, int marginLeft, int marginTop) const;
   std::string moveCompletedBookIfEnabled();
   void exitReaderAfterOptionalCompletedMove();
   void markCurrentBookAsFinished();

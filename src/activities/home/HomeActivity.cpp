@@ -29,6 +29,7 @@
 #include "activities/apps/BookmarksAppActivity.h"
 #include "activities/apps/DictionaryActivity.h"
 #include "activities/apps/FavoritesAppActivity.h"
+#include "activities/apps/HighlightsAppActivity.h"
 #include "activities/apps/IfFoundActivity.h"
 #include "activities/apps/ReadingHeatmapActivity.h"
 #include "activities/apps/ReadingStatsActivity.h"
@@ -998,6 +999,10 @@ void HomeActivity::loop() {
           break;
         case ShortcutId::RecentBooks:
           activityManager.goToRecentBooks();
+          break;
+        case ShortcutId::Highlights:
+          startActivityForResult(std::make_unique<HighlightsAppActivity>(renderer, mappedInput),
+                                 [this](const ActivityResult&) { requestFreshHomeRender(true); });
           break;
         case ShortcutId::Bookmarks:
           startActivityForResult(std::make_unique<BookmarksAppActivity>(renderer, mappedInput),

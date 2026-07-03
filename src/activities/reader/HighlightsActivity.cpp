@@ -1,4 +1,4 @@
-#include "BookmarksActivity.h"
+#include "HighlightsActivity.h"
 
 #include <GfxRenderer.h>
 #include <I18n.h>
@@ -14,10 +14,10 @@
 
 namespace {
 constexpr const char* PAGE_LABEL = "Page ";
-constexpr unsigned long DELETE_BOOKMARK_HOLD_MS = 1000;
-}
+constexpr unsigned long DELETE_HIGHLIGHT_HOLD_MS = 1000;
+}  // namespace
 
-int BookmarksActivity::getPageItems() const {
+int HighlightsActivity::getPageItems() const {
   constexpr int lineHeight = 30;
   const int screenHeight = renderer.getScreenHeight();
   const auto orientation = renderer.getOrientation();
@@ -28,57 +28,60 @@ int BookmarksActivity::getPageItems() const {
   return std::max(1, availableHeight / lineHeight);
 }
 
-std::string BookmarksActivity::getItemLabel(const int index) const {
-  const auto& bookmark = bookmarks[index];
+std::string HighlightsActivity::getItemLabel(const int index) const {
+  const auto& highlight = highlights[index];
   char buffer[64];
 
-  if (!bookmark.snippet.empty()) {
+  if (!highlight.snippet.empty()) {
     snprintf(buffer, sizeof(buffer), "%d. ", index + 1);
-    return std::string(buffer) + bookmark.snippet;
+    return std::string(buffer) + highlight.snippet;
   }
 
   if (epub) {
-    const int tocIndex = epub->getTocIndexForSpineIndex(bookmark.spineIndex);
+    const int tocIndex = epub->getTocIndexForSpineIndex(highlight.spineIndex);
     if (tocIndex != -1) {
       const auto tocItem = epub->getTocItem(tocIndex);
       snprintf(buffer, sizeof(buffer), "%d. ", index + 1);
-      return std::string(buffer) + tocItem.title + " - " + PAGE_LABEL + std::to_string(bookmark.pageNumber + 1);
+      return std::string(buffer) + tocItem.title + " - " + PAGE_LABEL + std::to_string(highlight.startPage + 1);
     }
 
-    snprintf(buffer, sizeof(buffer), "%d. %s%d, %s%d", index + 1, tr(STR_SECTION_PREFIX), bookmark.spineIndex + 1,
-             PAGE_LABEL, bookmark.pageNumber + 1);
+    snprintf(buffer, sizeof(buffer), "%d. %s%d, %s%d", index + 1, tr(STR_SECTION_PREFIX), highlight.spineIndex + 1,
+             PAGE_LABEL, highlight.startPage + 1);
     return buffer;
   }
 
-  snprintf(buffer, sizeof(buffer), "%d. %s%d", index + 1, PAGE_LABEL, bookmark.pageNumber + 1);
+  snprintf(buffer, sizeof(buffer), "%d. %s%d", index + 1, PAGE_LABEL, highlight.startPage + 1);
   return buffer;
 }
 
-void BookmarksActivity::onEnter() {
+void HighlightsActivity::onEnter() {
   Activity::onEnter();
   requestUpdate();
 }
 
-void BookmarksActivity::onExit() { Activity::onExit(); }
+void HighlightsActivity::onExit() { Activity::onExit(); }
 
-void BookmarksActivity::deleteBookmarkAt(const int index) {
-  if (!onDeleteBookmark || index < 0 || index >= static_cast<int>(bookmarks.size())) {
+void HighlightsActivity::deleteHighlightAt(const int index) {
+  if (!onDeleteHighlight || index < 0 || index >= static_cast<int>(highlights.size())) {
     return;
   }
 
-  const auto bookmark = bookmarks[index];
-  if (!onDeleteBookmark(bookmark)) {
+  const auto highlight = highlights[index];
+  if (!onDeleteHighlight(highlight)) {
     return;
   }
 
-  bookmarks.erase(std::remove_if(bookmarks.begin(), bookmarks.end(),
-                                 [&](const BookmarkStore::Bookmark& current) {
-                                   return current.spineIndex == bookmark.spineIndex &&
-                                          current.pageNumber == bookmark.pageNumber;
-                                 }),
-                  bookmarks.end());
+  highlights.erase(std::remove_if(highlights.begin(), highlights.end(),
+                                  [&](const HighlightStore::Highlight& current) {
+                                    return current.spineIndex == highlight.spineIndex &&
+                                           current.startPage == highlight.startPage &&
+                                           current.startWord == highlight.startWord &&
+                                           current.endPage == highlight.endPage &&
+                                           current.endWord == highlight.endWord;
+                                  }),
+                   highlights.end());
 
-  if (bookmarks.empty()) {
+  if (highlights.empty()) {
     ActivityResult cancelResult;
     cancelResult.isCancelled = true;
     setResult(std::move(cancelResult));
@@ -86,41 +89,41 @@ void BookmarksActivity::deleteBookmarkAt(const int index) {
     return;
   }
 
-  if (selectorIndex >= static_cast<int>(bookmarks.size())) {
-    selectorIndex = static_cast<int>(bookmarks.size()) - 1;
+  if (selectorIndex >= static_cast<int>(highlights.size())) {
+    selectorIndex = static_cast<int>(highlights.size()) - 1;
   }
 }
 
-void BookmarksActivity::confirmDeleteSelectedBookmark() {
-  if (!onDeleteBookmark || selectorIndex < 0 || selectorIndex >= static_cast<int>(bookmarks.size())) {
+void HighlightsActivity::confirmDeleteSelectedHighlight() {
+  if (!onDeleteHighlight || selectorIndex < 0 || selectorIndex >= static_cast<int>(highlights.size())) {
     return;
   }
 
   const int index = selectorIndex;
   const std::string body = getItemLabel(index);
   startActivityForResult(
-      std::make_unique<ConfirmationActivity>(renderer, mappedInput, tr(STR_DELETE_BOOKMARK), body),
+      std::make_unique<ConfirmationActivity>(renderer, mappedInput, tr(STR_DELETE_HIGHLIGHT), body),
       [this, index](const ActivityResult& result) {
         if (!result.isCancelled) {
-          deleteBookmarkAt(index);
+          deleteHighlightAt(index);
         }
         requestUpdate();
       });
 }
 
-void BookmarksActivity::openSelectedBookmarkDialog() {
-  if (bookmarks.empty()) {
+void HighlightsActivity::openSelectedHighlightDialog() {
+  if (highlights.empty()) {
     return;
   }
 
   const int index = selectorIndex;
-  const auto bookmark = bookmarks[index];
-  const char* rawTitle = headerTitle.empty() ? tr(STR_BOOKMARKS) : headerTitle.c_str();
+  const auto highlight = highlights[index];
+  const char* rawTitle = headerTitle.empty() ? tr(STR_HIGHLIGHTS) : headerTitle.c_str();
   startActivityForResult(
       std::make_unique<OptionDialogActivity>(renderer, mappedInput, rawTitle, getItemLabel(index),
-                                             std::vector<const char*>{tr(STR_JUMP_TO_BOOKMARK),
-                                                                       tr(STR_DELETE_BOOKMARK_ACTION)}),
-      [this, index, bookmark](const ActivityResult& result) {
+                                             std::vector<const char*>{tr(STR_JUMP_TO_HIGHLIGHT),
+                                                                       tr(STR_DELETE_HIGHLIGHT_ACTION)}),
+      [this, index, highlight](const ActivityResult& result) {
         if (result.isCancelled) {
           requestUpdate();
           return;
@@ -128,28 +131,28 @@ void BookmarksActivity::openSelectedBookmarkDialog() {
 
         const auto& menuResult = std::get<MenuResult>(result.data);
         if (menuResult.action == 0) {
-          setResult(BookmarkResult{static_cast<int>(bookmark.spineIndex), bookmark.pageNumber});
+          setResult(BookmarkResult{static_cast<int>(highlight.spineIndex), highlight.startPage});
           finish();
           return;
         }
 
-        deleteBookmarkAt(index);
+        deleteHighlightAt(index);
         requestUpdate();
       });
 }
 
-void BookmarksActivity::loop() {
-  const int totalItems = static_cast<int>(bookmarks.size());
+void HighlightsActivity::loop() {
+  const int totalItems = static_cast<int>(highlights.size());
   const int pageItems = getPageItems();
 
   if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
-    if (mappedInput.getHeldTime() >= DELETE_BOOKMARK_HOLD_MS) {
-      confirmDeleteSelectedBookmark();
+    if (mappedInput.getHeldTime() >= DELETE_HIGHLIGHT_HOLD_MS) {
+      confirmDeleteSelectedHighlight();
       return;
     }
 
-    if (!bookmarks.empty()) {
-      openSelectedBookmarkDialog();
+    if (!highlights.empty()) {
+      openSelectedHighlightDialog();
     }
     return;
   }
@@ -183,12 +186,12 @@ void BookmarksActivity::loop() {
   });
 }
 
-void BookmarksActivity::render(RenderLock&&) {
+void HighlightsActivity::render(RenderLock&&) {
   renderer.clearScreen();
 
-  const int totalItems = static_cast<int>(bookmarks.size());
+  const int totalItems = static_cast<int>(highlights.size());
   if (totalItems == 0) {
-    renderer.drawCenteredText(UI_12_FONT_ID, 300, tr(STR_NO_BOOKMARKS), true, EpdFontFamily::BOLD);
+    renderer.drawCenteredText(UI_12_FONT_ID, 300, tr(STR_NO_HIGHLIGHTS), true, EpdFontFamily::BOLD);
     renderer.displayBuffer();
     return;
   }
@@ -205,7 +208,7 @@ void BookmarksActivity::render(RenderLock&&) {
   const int contentY = hintGutterHeight;
   const int pageItems = getPageItems();
 
-  const char* rawTitle = headerTitle.empty() ? tr(STR_BOOKMARKS) : headerTitle.c_str();
+  const char* rawTitle = headerTitle.empty() ? tr(STR_HIGHLIGHTS) : headerTitle.c_str();
   const std::string title = renderer.truncatedText(UI_12_FONT_ID, rawTitle, contentWidth - 20);
   const int titleX =
       contentX + (contentWidth - renderer.getTextWidth(UI_12_FONT_ID, title.c_str(), EpdFontFamily::BOLD)) / 2;

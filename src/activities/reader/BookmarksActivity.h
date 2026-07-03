@@ -21,6 +21,8 @@ class BookmarksActivity final : public Activity {
   int getPageItems() const;
   std::string getItemLabel(int index) const;
   void confirmDeleteSelectedBookmark();
+  void deleteBookmarkAt(int index);
+  void openSelectedBookmarkDialog();
 
  public:
   explicit BookmarksActivity(GfxRenderer& renderer, MappedInputManager& mappedInput,

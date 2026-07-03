@@ -8,6 +8,7 @@
 #include "BookmarksAppActivity.h"
 #include "DictionaryActivity.h"
 #include "FavoritesAppActivity.h"
+#include "HighlightsAppActivity.h"
 #include "IfFoundActivity.h"
 #include "ReadingHeatmapActivity.h"
 #include "ReadingStatsActivity.h"
@@ -169,6 +170,9 @@ void AppsActivity::openSelectedApp() {
     case ShortcutId::RecentBooks:
       activityManager.goToRecentBooks();
       return;
+    case ShortcutId::Highlights:
+      activity = std::make_unique<HighlightsAppActivity>(renderer, mappedInput);
+      break;
     case ShortcutId::Bookmarks:
       activity = std::make_unique<BookmarksAppActivity>(renderer, mappedInput);
       break;

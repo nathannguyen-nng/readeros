@@ -329,6 +329,8 @@ class CrossPointSettings {
   uint8_t readMeShortcutOrder = 10;
   uint8_t recentBooksShortcut = SHORTCUT_APPS;
   uint8_t recentBooksShortcutOrder = 11;
+  uint8_t highlightsShortcut = SHORTCUT_APPS;
+  uint8_t highlightsShortcutOrder = 12;
   uint8_t bookmarksShortcut = SHORTCUT_APPS;
   uint8_t bookmarksShortcutOrder = 12;
   uint8_t favoritesShortcut = SHORTCUT_APPS;
@@ -353,6 +355,7 @@ class CrossPointSettings {
   uint8_t ifFoundShortcutVisible = 1;
   uint8_t readMeShortcutVisible = 1;
   uint8_t recentBooksShortcutVisible = 1;
+  uint8_t highlightsShortcutVisible = 1;
   uint8_t bookmarksShortcutVisible = 1;
   uint8_t favoritesShortcutVisible = 1;
   uint8_t dictionaryShortcutVisible = 1;

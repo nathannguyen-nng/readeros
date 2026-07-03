@@ -457,6 +457,13 @@ bool loadSettingsDirect(CrossPointSettings& s, const JsonDocument& doc, bool* ne
       clamp(doc["bookmarksShortcut"] | s.bookmarksShortcut, shortcutLocationCount, s.bookmarksShortcut);
   s.bookmarksShortcutOrder =
       clamp(doc["bookmarksShortcutOrder"] | s.bookmarksShortcutOrder, shortcutOrderCount, s.bookmarksShortcutOrder);
+  s.highlightsShortcut =
+      clamp(doc["highlightsShortcut"] | s.highlightsShortcut, shortcutLocationCount, s.highlightsShortcut);
+  // Default to the user's persisted bookmarks order (not the in-memory default) so Highlights
+  // lands immediately before Bookmarks after normalizeShortcutOrderSettings, even for users who
+  // already re-ordered their shortcuts before this setting existed.
+  s.highlightsShortcutOrder = clamp(doc["highlightsShortcutOrder"] | s.bookmarksShortcutOrder, shortcutOrderCount,
+                                    s.bookmarksShortcutOrder);
   s.favoritesShortcut =
       clamp(doc["favoritesShortcut"] | s.favoritesShortcut, shortcutLocationCount, s.favoritesShortcut);
   s.favoritesShortcutOrder =
@@ -501,6 +508,8 @@ bool loadSettingsDirect(CrossPointSettings& s, const JsonDocument& doc, bool* ne
                                        static_cast<uint8_t>(2), s.recentBooksShortcutVisible);
   s.bookmarksShortcutVisible = clamp(doc["bookmarksShortcutVisible"] | s.bookmarksShortcutVisible,
                                      static_cast<uint8_t>(2), s.bookmarksShortcutVisible);
+  s.highlightsShortcutVisible = clamp(doc["highlightsShortcutVisible"] | s.highlightsShortcutVisible,
+                                      static_cast<uint8_t>(2), s.highlightsShortcutVisible);
   s.favoritesShortcutVisible = clamp(doc["favoritesShortcutVisible"] | s.favoritesShortcutVisible,
                                      static_cast<uint8_t>(2), s.favoritesShortcutVisible);
   s.dictionaryShortcutVisible = clamp(doc["dictionaryShortcutVisible"] | s.dictionaryShortcutVisible,
@@ -734,6 +743,8 @@ bool JsonSettingsIO::saveSettings(const CrossPointSettings& s, const char* path)
   doc["recentBooksShortcutOrder"] = s.recentBooksShortcutOrder;
   doc["bookmarksShortcut"] = s.bookmarksShortcut;
   doc["bookmarksShortcutOrder"] = s.bookmarksShortcutOrder;
+  doc["highlightsShortcut"] = s.highlightsShortcut;
+  doc["highlightsShortcutOrder"] = s.highlightsShortcutOrder;
   doc["favoritesShortcut"] = s.favoritesShortcut;
   doc["favoritesShortcutOrder"] = s.favoritesShortcutOrder;
   doc["dictionaryShortcut"] = s.dictionaryShortcut;
@@ -755,6 +766,7 @@ bool JsonSettingsIO::saveSettings(const CrossPointSettings& s, const char* path)
   doc["readMeShortcutVisible"] = s.readMeShortcutVisible;
   doc["recentBooksShortcutVisible"] = s.recentBooksShortcutVisible;
   doc["bookmarksShortcutVisible"] = s.bookmarksShortcutVisible;
+  doc["highlightsShortcutVisible"] = s.highlightsShortcutVisible;
   doc["favoritesShortcutVisible"] = s.favoritesShortcutVisible;
   doc["dictionaryShortcutVisible"] = s.dictionaryShortcutVisible;
   doc["fileTransferShortcutVisible"] = s.fileTransferShortcutVisible;
